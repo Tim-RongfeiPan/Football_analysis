@@ -4,3 +4,4 @@ runs/
 yolov5/runs
 yolov5_tracking/runs
 yolov5_tracking/yolov5
+test/
