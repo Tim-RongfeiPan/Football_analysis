@@ -314,22 +314,29 @@ retrieved_dist[retrieved_dist > dist_threshold] = dist_threshold
 h_retrieved_to_query = SyntheticUtil.find_transform(retrieved_dist, query_dist)
 
 refined_h = h_retrieved_to_query@retrieved_h
-# @ == np.dot()
+# @ === np.dot()
 ####################################################################################################################
 # Warp source image to destination based on homography
 
-cv.imshow("ss", seg_map)
-cv.waitKey(0)
+# cv.imshow("ss", seg_map)
+# cv.waitKey(0)
 
-logger.info(type(retrieved_h))
-logger.info(retrieved_h)
 logger.info(refined_h)
-logger.info(h_retrieved_to_query)
+logger.info(np.linalg.inv(refined_h))
 
 
 im_out = cv.warpPerspective(seg_map, np.linalg.inv(
     refined_h), (115, 74), borderMode=cv.BORDER_CONSTANT)
 
+
+test_point = np.array([0, 720, 1])
+new_dst = np.linalg.inv(refined_h)@test_point
+
+logger.info(new_dst/new_dst[-1])
+
+
+# cv.imshow("ss", im_out)
+# cv.waitKey(0)
 
 ############################################ STEP 4 : billboard warping #######################################
 # print(int(address_parser.advertising_image))
