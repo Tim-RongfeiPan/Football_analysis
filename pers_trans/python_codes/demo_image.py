@@ -335,9 +335,6 @@ new_dst = np.linalg.inv(refined_h)@test_point
 logger.info(new_dst/new_dst[-1])
 
 
-# cv.imshow("ss", im_out)
-# cv.waitKey(0)
-
 ############################################ STEP 4 : billboard warping #######################################
 # print(int(address_parser.advertising_image))
 if address_args.advertising_image:
