@@ -4,19 +4,23 @@ import scipy.io as sio
 import numpy as np
 import cv2 as cv
 
+import sys
+# print(sys.path)
+sys.path.append('D:\\vscoding\\Degree Project\\pers_trans\\python_codes')
+
+# print(sys.path)
+
+from loguru import logger
 
 from util.synthetic_util import SyntheticUtil
 from util.iou_util import IouUtil
 from util.projective_camera import ProjectiveCamera
 from util.iou_util import ut_homography_warp
-
-
 from options.test_options import TestOptions
 from models.models import create_model
 from PIL import Image
 
 import os
-from loguru import logger
 
 import torch
 import torchvision.transforms as transforms
@@ -89,7 +93,7 @@ def generate_deep_feature(edge_map, deep_model_directory):
     pivot_image = cv.cvtColor(pivot_image, cv.COLOR_RGB2GRAY)
     pivot_image = np.reshape(
         pivot_image, (1, pivot_image.shape[0], pivot_image.shape[1]))
-    print('Note: assume input image resolution is 180 x 320 (h x w)')
+    # print('Note: assume input image resolution is 180 x 320 (h x w)')
 
     data_loader = CameraDataset(pivot_image,
                                 pivot_image,
@@ -106,7 +110,7 @@ def generate_deep_feature(edge_map, deep_model_directory):
         checkpoint = torch.load(
             model_name, map_location=lambda storage, loc: storage)
         net.load_state_dict(checkpoint['state_dict'])
-        print('load model file from {}.'.format(model_name))
+        # print('load model file from {}.'.format(model_name))
     else:
         print('Error: file not found at {}'.format(model_name))
 
@@ -116,7 +120,7 @@ def generate_deep_feature(edge_map, deep_model_directory):
         device = torch.device('cuda:{}'.format(cuda_id))
         net = net.to(device)
         cudnn.benchmark = True
-    print('computation device: {}'.format(device))
+    # print('computation device: {}'.format(device))
 
     features = []
 
@@ -129,7 +133,7 @@ def generate_deep_feature(edge_map, deep_model_directory):
             # append to the feature list
 
     features = np.vstack((features))
-    print('feature dimension {}'.format(features.shape))
+    # print('feature dimension {}'.format(features.shape))
     return features
 
 
@@ -145,41 +149,40 @@ def testing_two_GAN(image, directory):
     model = create_model(opt)
     # test
 
-    if __name__ == '__main__':
+    # if __name__ == '__main__':
 
-        image = Image.fromarray(image)
-        osize = [256, 256]
-        cropsize = osize
-        image = transforms.Compose([transforms.Resize(osize, Image.Resampling.BICUBIC), transforms.RandomCrop(
-            cropsize), transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])(image)
-        image = image.unsqueeze(0)
+    image = Image.fromarray(image)
+    osize = [256, 256]
+    cropsize = osize
+    image = transforms.Compose([transforms.Resize(osize, Image.Resampling.BICUBIC), transforms.RandomCrop(
+        cropsize), transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])(image)
+    image = image.unsqueeze(0)
 
-        model.set_input(image)
-        model.test()
+    model.set_input(image)
+    model.test()
 
-        visuals = model.get_current_visuals()
+    visuals = model.get_current_visuals()
 
-        edge_map = visuals['fake_D']
-        seg_map = visuals['fake_C']
+    edge_map = visuals['fake_D']
+    seg_map = visuals['fake_C']
 
-        edge_map = cv.resize(edge_map, (1280, 720))
-        seg_map = cv.resize(seg_map, (1280, 720))
-        # cv.imshow("ee",edge_map)
-        # cv.waitKey()
+    edge_map = cv.resize(edge_map, (1280, 720))
+    seg_map = cv.resize(seg_map, (1280, 720))
+    # cv.imshow("ee",edge_map)
+    # cv.waitKey()
 
     return edge_map, seg_map
 
 
 ################################### STEP 0 : get the addresses ###########################################
-def pers_trans(input_image):
-
+def perstrans(input_image, pos):
     feature_type = 'deep'
 
     assert feature_type == "deep" or feature_type == 'HoG'
     query_index = 0
     current_directory = str(Path(__file__).resolve().parent)
 
-    print("current_directory is: " + current_directory)
+    # print("current_directory is: " + current_directory)
 
     if feature_type == "deep":
         deep_database_directory = current_directory + \
@@ -249,20 +252,20 @@ def pers_trans(input_image):
     # im_out = cv.warpPerspective(seg_map, np.linalg.inv(
     #     refined_h), (115, 74), borderMode=cv.BORDER_CONSTANT)
 
-    test_point = np.array([0, 720, 1])
+    test_point = np.array(pos)
     new_dst = np.linalg.inv(refined_h)@test_point
 
     # logger.info(new_dst/new_dst[-1])
     return new_dst/new_dst[-1]
 
 
-if __name__ == "__main__":
-    address_parser = argparse.ArgumentParser()
-    address_parser.add_argument(
-        '--image', required=True, type=str, help='sth like "./my_pic.png" ')
-    address_parser.add_argument('--advertising_image', required=False,
-                                type=str, help='sth like "./my_billboard.png" ')
+# if __name__ == "__main__":
+#     address_parser = argparse.ArgumentParser()
+#     address_parser.add_argument(
+#         '--image', required=True, type=str, help='sth like "./my_pic.png" ')
+#     address_parser.add_argument('--advertising_image', required=False,
+#                                 type=str, help='sth like "./my_billboard.png" ')
 
-    address_args = address_parser.parse_args()
-    out = pers_trans(address_args.image)
-    logger.info(out)
+#     address_args = address_parser.parse_args()
+#     out = perstrans(address_args.image, [0, 720, 1])
+#     logger.info(out)

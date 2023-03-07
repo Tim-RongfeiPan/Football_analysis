@@ -2,7 +2,14 @@ import argparse
 import os
 from util import util
 import torch
+import sys
+from pathlib import Path
 
+FILE = Path(__file__).resolve()
+ROOT = FILE.parents[0]  # YOLOv5 root directory
+if str(ROOT) not in sys.path:
+    sys.path.append(str(ROOT))  # add ROOT to PATH
+ROOT = Path(os.path.relpath(ROOT, Path.cwd()))  # relative
 
 class BaseOptions():
     def __init__(self):
@@ -11,7 +18,7 @@ class BaseOptions():
 
     def initialize(self,directory):
         #required=True
-        self.parser.add_argument('--image', required=True, type=str, help='sth like "./my_pic.png" ')
+        self.parser.add_argument('--image', required=False, type=str, help='sth like "./my_pic.png" ')
         self.parser.add_argument('--advertising_image', required=False, type=str, help='sth like "./my_billboard.png" ')
         
         self.parser.add_argument('--dataroot',type=str, default=directory+r'\pytorch-two-GAN-master\datasets\soccer_seg_detection', help='path to images (should have subfolders trainA, trainB, valA, valB, etc)')
@@ -44,6 +51,10 @@ class BaseOptions():
         self.parser.add_argument('--resize_or_crop', type=str, default='resize_and_crop', help='scaling and cropping of images at load time [resize_and_crop|crop|scale_width|scale_width_and_crop]')
         self.parser.add_argument('--no_flip', action='store_true', help='if specified, do not flip the images for data augmentation')
         self.parser.add_argument('--init_type', type=str, default='normal', help='network initialization [normal|xavier|kaiming|orthogonal]')
+
+        
+        self.parser.add_argument('--weights', nargs='+', type=str, default=ROOT / 'yolov5s.pt', help='model path or triton URL')
+        self.parser.add_argument('--source', type=str, default=ROOT / 'data/images', help='file/dir/URL/glob/screen/0(webcam)')
 
         self.initialized = True
 

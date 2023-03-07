@@ -29,6 +29,7 @@ Usage - formats:
 """
 
 import argparse
+from cmath import log
 import os
 import platform
 import sys
@@ -36,18 +37,22 @@ from pathlib import Path
 
 import torch
 
-FILE = Path(__file__).resolve()
-ROOT = FILE.parents[0]  # YOLOv5 root directory
-if str(ROOT) not in sys.path:
-    sys.path.append(str(ROOT))  # add ROOT to PATH
-ROOT = Path(os.path.relpath(ROOT, Path.cwd()))  # relative
-
 from models.common import DetectMultiBackend
 from utils.dataloaders import IMG_FORMATS, VID_FORMATS, LoadImages, LoadScreenshots, LoadStreams
 from utils.general import (LOGGER, Profile, check_file, check_img_size, check_imshow, check_requirements, colorstr, cv2,
                            increment_path, non_max_suppression, print_args, scale_boxes, strip_optimizer, xyxy2xywh)
 from utils.plots import Annotator, colors, save_one_box
 from utils.torch_utils import select_device, smart_inference_mode
+from loguru import logger
+# logger.info(sys.path)
+
+
+
+FILE = Path(__file__).resolve()
+ROOT = FILE.parents[0]  # YOLOv5 root directory
+if str(ROOT) not in sys.path:
+    sys.path.append(str(ROOT))  # add ROOT to PATH
+ROOT = Path(os.path.relpath(ROOT, Path.cwd()))  # relative
 
 
 @smart_inference_mode()
@@ -153,7 +158,7 @@ def run(
             if len(det):
                 # Rescale boxes from img_size to im0 size
                 det[:, :4] = scale_boxes(im.shape[2:], det[:, :4], im0.shape).round()
-
+                
                 # Print results
                 for c in det[:, 5].unique():
                     n = (det[:, 5] == c).sum()  # detections per class
@@ -161,6 +166,16 @@ def run(
 
                 # Write results
                 for *xyxy, conf, cls in reversed(det):
+                    posx = ((xyxy[0]+xyxy[2])/2).cpu().detach().numpy().tolist()
+                    posy = xyxy[3].cpu().detach().numpy().tolist()
+                    pos =[int(posx*1280/640),int(posy*720/640),1]
+                    print(pos)
+                    sys.path.append('d:/vscoding/Degree Project/pers_trans/python_codes')
+                    import perstrans
+                    # print(source)
+                    out = perstrans.perstrans(source,pos)
+                    print(out)
+
                     if save_txt:  # Write to file
                         xywh = (xyxy2xywh(torch.tensor(xyxy).view(1, 4)) / gn).view(-1).tolist()  # normalized xywh
                         line = (cls, *xywh, conf) if save_conf else (cls, *xywh)  # label format
