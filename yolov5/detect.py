@@ -47,7 +47,6 @@ from loguru import logger
 # logger.info(sys.path)
 
 
-
 FILE = Path(__file__).resolve()
 ROOT = FILE.parents[0]  # YOLOv5 root directory
 if str(ROOT) not in sys.path:
@@ -158,22 +157,26 @@ def run(
             if len(det):
                 # Rescale boxes from img_size to im0 size
                 det[:, :4] = scale_boxes(im.shape[2:], det[:, :4], im0.shape).round()
-                
+
                 # Print results
                 for c in det[:, 5].unique():
                     n = (det[:, 5] == c).sum()  # detections per class
                     s += f"{n} {names[int(c)]}{'s' * (n > 1)}, "  # add to string
 
                 # Write results
+                pers_point = []
                 for *xyxy, conf, cls in reversed(det):
-                    posx = ((xyxy[0]+xyxy[2])/2).cpu().detach().numpy().tolist()
+                    # TODO:perpective transformation
+                    posx = ((xyxy[0] + xyxy[2]) / 2).cpu().detach().numpy().tolist()
                     posy = xyxy[3].cpu().detach().numpy().tolist()
-                    pos =[int(posx*1280/640),int(posy*720/640),1]
+                    pos = [int(posx * 1280 / 640), int(posy * 720 / 640), 1]
                     print(pos)
                     sys.path.append('d:/vscoding/Degree Project/pers_trans/python_codes')
                     import perstrans
                     # print(source)
-                    out = perstrans.perstrans(source,pos)
+                    seg_map, retrieved_image, out = perstrans.perstrans(source, pos)
+                    out = (int(out[0]), int(out[1]))
+                    pers_point.append(out)
                     print(out)
 
                     if save_txt:  # Write to file
@@ -189,6 +192,19 @@ def run(
                     if save_crop:
                         save_one_box(xyxy, imc, file=save_dir / 'crops' / names[c] / f'{p.stem}.jpg', BGR=True)
 
+                # cv2.imshow('ss', edge_map)
+                # cv2.waitKey(1)
+                cv2.imshow('ssd', retrieved_image)
+                cv2.waitKey()
+                cv2.imshow('sss', seg_map)
+                cv2.waitKey()
+                model_image = cv2.imread('models/model.jpg')
+                model_image = cv2.resize(model_image, (115, 74))
+                for point in pers_point:
+                    cv2.circle(model_image, point, 1, (0, 0, 255), 4)
+                model_image = cv2.resize(model_image, (1200, 720))
+                cv2.imshow('s', model_image)
+                cv2.waitKey()
             # Stream results
             im0 = annotator.result()
             if view_img:

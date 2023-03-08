@@ -1,3 +1,19 @@
+from deep.camera_dataset import CameraDataset
+from deep.siamese import BranchNetwork, SiameseNetwork
+import argparse
+import time
+import torch.backends.cudnn as cudnn
+import torchvision.transforms as transforms
+import torch
+import os
+from PIL import Image
+from models.models import create_model
+from options.test_options import TestOptions
+from util.iou_util import ut_homography_warp
+from util.projective_camera import ProjectiveCamera
+from util.iou_util import IouUtil
+from util.synthetic_util import SyntheticUtil
+from loguru import logger
 from pathlib import Path
 import pyflann
 import scipy.io as sio
@@ -9,28 +25,6 @@ import sys
 sys.path.append('D:\\vscoding\\Degree Project\\pers_trans\\python_codes')
 
 # print(sys.path)
-
-from loguru import logger
-
-from util.synthetic_util import SyntheticUtil
-from util.iou_util import IouUtil
-from util.projective_camera import ProjectiveCamera
-from util.iou_util import ut_homography_warp
-from options.test_options import TestOptions
-from models.models import create_model
-from PIL import Image
-
-import os
-
-import torch
-import torchvision.transforms as transforms
-import torch.backends.cudnn as cudnn
-import time
-import argparse
-
-
-from deep.siamese import BranchNetwork, SiameseNetwork
-from deep.camera_dataset import CameraDataset
 
 
 def generate_HOG_feature(edge_map):
@@ -256,16 +250,16 @@ def perstrans(input_image, pos):
     new_dst = np.linalg.inv(refined_h)@test_point
 
     # logger.info(new_dst/new_dst[-1])
-    return new_dst/new_dst[-1]
+    return seg_map, retrieved_image, new_dst/new_dst[-1]
 
 
-# if __name__ == "__main__":
-#     address_parser = argparse.ArgumentParser()
-#     address_parser.add_argument(
-#         '--image', required=True, type=str, help='sth like "./my_pic.png" ')
-#     address_parser.add_argument('--advertising_image', required=False,
-#                                 type=str, help='sth like "./my_billboard.png" ')
+if __name__ == "__main__":
+    address_parser = argparse.ArgumentParser()
+    address_parser.add_argument(
+        '--image', required=True, type=str, help='sth like "./my_pic.png" ')
+    address_parser.add_argument('--advertising_image', required=False,
+                                type=str, help='sth like "./my_billboard.png" ')
 
-#     address_args = address_parser.parse_args()
-#     out = perstrans(address_args.image, [0, 720, 1])
-#     logger.info(out)
+    address_args = address_parser.parse_args()
+    out = perstrans(address_args.image, [0, 720, 1])
+    logger.info(out)
