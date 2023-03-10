@@ -129,6 +129,7 @@ def run(
         # Inference
         with dt[1]:
             visualize = increment_path(save_dir / Path(path).stem, mkdir=True) if visualize else False
+            print(im.shape)
             pred = model(im, augment=augment, visualize=visualize)
 
         # NMS
@@ -146,17 +147,18 @@ def run(
                 s += f'{i}: '
             else:
                 p, im0, frame = path, im0s.copy(), getattr(dataset, 'frame', 0)
-
             p = Path(p)  # to Path
             save_path = str(save_dir / p.name)  # im.jpg
             txt_path = str(save_dir / 'labels' / p.stem) + ('' if dataset.mode == 'image' else f'_{frame}')  # im.txt
             s += '%gx%g ' % im.shape[2:]  # print string
             gn = torch.tensor(im0.shape)[[1, 0, 1, 0]]  # normalization gain whwh
             imc = im0.copy() if save_crop else im0  # for save_crop
+            print(imc.shape)
             annotator = Annotator(im0, line_width=line_thickness, example=str(names))
             if len(det):
                 # Rescale boxes from img_size to im0 size
                 det[:, :4] = scale_boxes(im.shape[2:], det[:, :4], im0.shape).round()
+                # print(det)
 
                 # Print results
                 for c in det[:, 5].unique():
@@ -169,12 +171,11 @@ def run(
                     # TODO:perpective transformation
                     posx = ((xyxy[0] + xyxy[2]) / 2).cpu().detach().numpy().tolist()
                     posy = xyxy[3].cpu().detach().numpy().tolist()
-                    pos = [int(posx * 1280 / 640), int(posy * 720 / 640), 1]
+                    pos = [int(posx * 1280 / 1466), int(posy * 720 / 783), 1]
                     print(pos)
                     sys.path.append('d:/vscoding/Degree Project/pers_trans/python_codes')
                     import perstrans
-                    # print(source)
-                    seg_map, retrieved_image, out = perstrans.perstrans(source, pos)
+                    seg_map, im_out, out = perstrans.perstrans(source, pos)
                     out = (int(out[0]), int(out[1]))
                     pers_point.append(out)
                     print(out)
@@ -194,10 +195,11 @@ def run(
 
                 # cv2.imshow('ss', edge_map)
                 # cv2.waitKey(1)
-                cv2.imshow('ssd', retrieved_image)
-                cv2.waitKey()
-                cv2.imshow('sss', seg_map)
-                cv2.waitKey()
+                im_out = cv2.resize(im_out, (1280, 720))
+                cv2.imshow('ssd', im_out)
+                cv2.waitKey(1)
+                # cv2.imshow('sss', seg_map)
+                # cv2.waitKey(1)
                 model_image = cv2.imread('models/model.jpg')
                 model_image = cv2.resize(model_image, (115, 74))
                 for point in pers_point:

@@ -243,14 +243,14 @@ def perstrans(input_image, pos):
     refined_h = h_retrieved_to_query@retrieved_h
     # @ === np.dot()
 
-    # im_out = cv.warpPerspective(seg_map, np.linalg.inv(
-    #     refined_h), (115, 74), borderMode=cv.BORDER_CONSTANT)
+    im_out = cv.warpPerspective(seg_map, np.linalg.inv(
+        refined_h), (115, 74), borderMode=cv.BORDER_CONSTANT)
 
     test_point = np.array(pos)
     new_dst = np.linalg.inv(refined_h)@test_point
 
     # logger.info(new_dst/new_dst[-1])
-    return seg_map, retrieved_image, new_dst/new_dst[-1]
+    return seg_map, im_out, new_dst/new_dst[-1]
 
 
 if __name__ == "__main__":
