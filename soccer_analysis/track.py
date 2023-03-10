@@ -21,6 +21,8 @@ from yolov5.utils.general import (LOGGER, check_file, check_img_size,
 from yolov5.utils.plots import Annotator, colors, save_one_box
 from yolov5.utils.torch_utils import select_device, time_sync
 
+from pers_trans.perstrans import perstrans
+
 # limit the number of cpus used by high performance libraries
 os.environ["OMP_NUM_THREADS"] = "1"
 os.environ["OPENBLAS_NUM_THREADS"] = "1"
@@ -62,6 +64,7 @@ def run(
         show_team=False,  # save and show team assignment
         save_txt=False,  # save results to *.txt
         save_conf=False,  # save confidences in --save-txt labels
+        show_perstrans=False,  # show perspective transformation result
         save_crop=False,  # save cropped prediction boxes
         save_vid=False,  # save confidences in --save-txt labels
         nosave=False,  # do not save images/videos
@@ -235,14 +238,35 @@ def run(
                     xywhs.cpu(), confs.cpu(), clss.cpu(), im0)
                 t5 = time_sync()
                 dt[3] += t5 - t4
-
+                # output: list of [x1, y1, x2, y2, track_id, class_id, conf]
                 # draw boxes for visualization
+                pers_point = []
                 if len(outputs[i]) > 0:
                     for j, (output, conf) in enumerate(zip(outputs[i], confs)):
 
                         bboxes = output[0:4]
                         id = output[4]
                         cls = output[5]
+                        print(bboxes)
+
+                        if show_perstrans:
+                            # TODO: perspective transformation
+
+                            posx = int((bboxes[0] + bboxes[2]) / 2)
+                            posy = int(bboxes[3])
+                            pos = [int(posx * 1280 / 1466),
+                                   int(posy * 720 / 783), 1]
+                            print(pos)
+                            # sys.path.append(
+                            #     'd:/vscoding/Degree Project/pers_trans/python_codes')
+                            # import perstrans
+                            #source = ?
+                            source_image = cv2.imread(source)
+                            seg_map, im_out, out = perstrans(
+                                source_image, pos)
+                            out = (int(out[0]), int(out[1]))
+                            pers_point.append(out)
+                            print(out)
 
                         if save_txt:
                             # to MOT format
@@ -284,7 +308,6 @@ def run(
 
                 LOGGER.info(
                     f'{s}Done. YOLO:({t3 - t2:.3f}s), StrongSORT:({t5 - t4:.3f}s)')
-
             else:
                 strongsort_list[i].increment_ages()
                 LOGGER.info('No detections')
@@ -360,6 +383,8 @@ def parse_opt():
                         help='save cropped prediction boxes')
     parser.add_argument('--save-vid', action='store_true',
                         help='save video tracking results')
+    parser.add_argument('--show-perstrans', action='store_true',
+                        help='show perspective transformation result')
     parser.add_argument('--nosave', action='store_true',
                         help='do not save images/videos')
     # class 0 is person, 1 is bycicle, 2 is car... 79 is oven

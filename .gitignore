@@ -7,7 +7,7 @@ yolov5_tracking/yolov5
 
 /pers_trans/python_codes/pytorch-two-GAN-master/checkpoints
 /pers_trans/python_codes/pytorch-two-GAN-master/datasets
-.pth
+*.pth
 *.mp4
 soccer_analysis/yolov5
 soccer_analysis/runs
