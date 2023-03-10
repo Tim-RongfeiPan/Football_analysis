@@ -34,19 +34,21 @@ class ReIDDetectMultiBackend(nn.Module):
         super().__init__()
         w = weights[0] if isinstance(weights, list) else weights
         self.pt, self.jit, self.onnx, self.xml, self.engine, self.coreml, \
-            self.saved_model, self.pb, self.tflite, self.edgetpu, self.tfjs = self.model_type(w)  # get backend
+            self.saved_model, self.pb, self.tflite, self.edgetpu, self.tfjs = self.model_type(
+                w)  # get backend
         self.fp16 = fp16
         self.fp16 &= self.pt or self.jit or self.engine  # FP16
 
         # Build transform functions
         self.device = device
-        self.image_size=(256, 128)
-        self.pixel_mean=[0.485, 0.456, 0.406]
-        self.pixel_std=[0.229, 0.224, 0.225]
+        self.image_size = (256, 128)
+        self.pixel_mean = [0.485, 0.456, 0.406]
+        self.pixel_std = [0.229, 0.224, 0.225]
         self.transforms = []
         self.transforms += [T.Resize(self.image_size)]
         self.transforms += [T.ToTensor()]
-        self.transforms += [T.Normalize(mean=self.pixel_mean, std=self.pixel_std)]
+        self.transforms += [T.Normalize(mean=self.pixel_mean,
+                                        std=self.pixel_std)]
         self.preprocess = T.Compose(self.transforms)
         self.to_pil = T.ToPILImage()
 
@@ -59,7 +61,8 @@ class ReIDDetectMultiBackend(nn.Module):
             elif file_exists(w):
                 pass
             else:
-                print(f'No URL associated to the chosen StrongSORT weights ({w}). Choose between:')
+                print(
+                    f'No URL associated to the chosen StrongSORT weights ({w}). Choose between:')
                 show_downloadeable_models()
                 exit()
 
@@ -76,7 +79,7 @@ class ReIDDetectMultiBackend(nn.Module):
             if w and check_isfile(w) and w.suffix == '.pt':
                 load_pretrained_weights(self.model, w)
             self.model.to(device).eval()
-            self.model.half() if self.fp16 else  self.model.float()
+            self.model.half() if self.fp16 else self.model.float()
         elif self.jit:
             LOGGER.info(f'Loading {w} for TorchScript inference...')
             self.model = torch.jit.load(w)
@@ -86,15 +89,19 @@ class ReIDDetectMultiBackend(nn.Module):
             cuda = torch.cuda.is_available() and device.type != 'cpu'
             #check_requirements(('onnx', 'onnxruntime-gpu' if cuda else 'onnxruntime'))
             import onnxruntime
-            providers = ['CUDAExecutionProvider', 'CPUExecutionProvider'] if cuda else ['CPUExecutionProvider']
-            self.session = onnxruntime.InferenceSession(str(w), providers=providers)
+            providers = ['CUDAExecutionProvider', 'CPUExecutionProvider'] if cuda else [
+                'CPUExecutionProvider']
+            self.session = onnxruntime.InferenceSession(
+                str(w), providers=providers)
         elif self.engine:  # TensorRT
             LOGGER.info(f'Loading {w} for TensorRT inference...')
             import tensorrt as trt  # https://developer.nvidia.com/nvidia-tensorrt-download
-            check_version(trt.__version__, '7.0.0', hard=True)  # require tensorrt>=7.0.0
+            # require tensorrt>=7.0.0
+            check_version(trt.__version__, '7.0.0', hard=True)
             if device.type == 'cpu':
                 device = torch.device('cuda:0')
-            Binding = namedtuple('Binding', ('name', 'dtype', 'shape', 'data', 'ptr'))
+            Binding = namedtuple(
+                'Binding', ('name', 'dtype', 'shape', 'data', 'ptr'))
             logger = trt.Logger(trt.Logger.INFO)
             with open(w, 'rb') as f, trt.Runtime(logger) as runtime:
                 self.model_ = runtime.deserialize_cuda_engine(f.read())
@@ -108,30 +115,38 @@ class ReIDDetectMultiBackend(nn.Module):
                 if self.model_.binding_is_input(index):
                     if -1 in tuple(self.model_.get_binding_shape(index)):  # dynamic
                         dynamic = True
-                        self.context.set_binding_shape(index, tuple(self.model_.get_profile_shape(0, index)[2]))
+                        self.context.set_binding_shape(index, tuple(
+                            self.model_.get_profile_shape(0, index)[2]))
                     if dtype == np.float16:
                         self.fp16 = True
                 shape = tuple(self.context.get_binding_shape(index))
                 im = torch.from_numpy(np.empty(shape, dtype=dtype)).to(device)
-                self.bindings[name] = Binding(name, dtype, shape, im, int(im.data_ptr()))
-            self.binding_addrs = OrderedDict((n, d.ptr) for n, d in self.bindings.items())
-            batch_size = self.bindings['images'].shape[0]  # if dynamic, this is instead max batch size
+                self.bindings[name] = Binding(
+                    name, dtype, shape, im, int(im.data_ptr()))
+            self.binding_addrs = OrderedDict(
+                (n, d.ptr) for n, d in self.bindings.items())
+            # if dynamic, this is instead max batch size
+            batch_size = self.bindings['images'].shape[0]
         elif self.xml:  # OpenVINO
             LOGGER.info(f'Loading {w} for OpenVINO inference...')
-            check_requirements(('openvino',))  # requires openvino-dev: https://pypi.org/project/openvino-dev/
+            # requires openvino-dev: https://pypi.org/project/openvino-dev/
+            check_requirements(('openvino',))
             from openvino.runtime import Core, Layout, get_batch
             ie = Core()
             if not Path(w).is_file():  # if not *.xml
-                w = next(Path(w).glob('*.xml'))  # get *.xml file from *_openvino_model dir
-            network = ie.read_model(model=w, weights=Path(w).with_suffix('.bin'))
+                # get *.xml file from *_openvino_model dir
+                w = next(Path(w).glob('*.xml'))
+            network = ie.read_model(
+                model=w, weights=Path(w).with_suffix('.bin'))
             if network.get_parameters()[0].get_layout().empty:
                 network.get_parameters()[0].set_layout(Layout("NCWH"))
             batch_dim = get_batch(network)
             if batch_dim.is_static:
                 batch_size = batch_dim.get_length()
-            self.executable_network = ie.compile_model(network, device_name="CPU")  # device_name="MYRIAD" for Intel NCS2
+            self.executable_network = ie.compile_model(
+                network, device_name="CPU")  # device_name="MYRIAD" for Intel NCS2
             self.output_layer = next(iter(self.executable_network.outputs))
-        
+
         elif self.tflite:
             LOGGER.info(f'Loading {w} for TensorFlow Lite inference...')
             try:  # https://coral.ai/docs/edgetpu/tflite-python/#update-existing-tf-lite-code-for-the-edge-tpu
@@ -144,20 +159,22 @@ class ReIDDetectMultiBackend(nn.Module):
             # Get input and output tensors.
             self.input_details = self.interpreter.get_input_details()
             self.output_details = self.interpreter.get_output_details()
-            
+
             # Test model on random input data.
-            input_data = np.array(np.random.random_sample((1,256,128,3)), dtype=np.float32)
-            self.interpreter.set_tensor(self.input_details[0]['index'], input_data)
-            
+            input_data = np.array(np.random.random_sample(
+                (1, 256, 128, 3)), dtype=np.float32)
+            self.interpreter.set_tensor(
+                self.input_details[0]['index'], input_data)
+
             self.interpreter.invoke()
 
             # The function `get_tensor()` returns a copy of the tensor data.
-            output_data = self.interpreter.get_tensor(self.output_details[0]['index'])
+            output_data = self.interpreter.get_tensor(
+                self.output_details[0]['index'])
         else:
             print('This model framework is not supported yet!')
             exit()
-        
-        
+
     @staticmethod
     def model_type(p='path/to/model.pt'):
         # Return model type from model path, i.e. path='path/to/model.onnx' -> type=onnx
@@ -165,11 +182,13 @@ class ReIDDetectMultiBackend(nn.Module):
         suffixes = list(export_formats().Suffix) + ['.xml']  # export suffixes
         check_suffix(p, suffixes)  # checks
         p = Path(p).name  # eliminate trailing separators
-        pt, jit, onnx, xml, engine, coreml, saved_model, pb, tflite, edgetpu, tfjs, xml2 = (s in p for s in suffixes)
+        # ['.pt', '.torchscript', '.onnx', '_openvino_model', '.engine', '.mlmodel',
+        # '_saved_model', '.pb', '.tflite', '_edgetpu.tflite', '_web_model', '.xml']
+        pt, jit, onnx, xml, engine, coreml, saved_model, pb, tflite, edgetpu, tfjs, xml2 = (
+            s in p for s in suffixes)
         xml |= xml2  # *_openvino_model or *.xml
         tflite &= not edgetpu  # *.tflite
         return pt, jit, onnx, xml, engine, coreml, saved_model, pb, tflite, edgetpu, tfjs
-
 
     def _preprocess(self, im_batch):
 
@@ -183,16 +202,16 @@ class ReIDDetectMultiBackend(nn.Module):
         images = images.to(self.device)
 
         return images
-    
+
     # @profile
     def forward(self, im_batch):
-        
+
         # preprocess batch
         im_batch = self._preprocess(im_batch)
 
         # batch to half
         if self.fp16 and im_batch.dtype != torch.float16:
-           im_batch = im_batch.half()
+            im_batch = im_batch.half()
 
         # batch processing
         features = []
@@ -202,13 +221,18 @@ class ReIDDetectMultiBackend(nn.Module):
             features = self.model(im_batch)
         elif self.onnx:  # ONNX Runtime
             im_batch = im_batch.cpu().numpy()  # torch to numpy
-            features = self.session.run([self.session.get_outputs()[0].name], {self.session.get_inputs()[0].name: im_batch})[0]
+            features = self.session.run([self.session.get_outputs()[0].name], {
+                                        self.session.get_inputs()[0].name: im_batch})[0]
         elif self.engine:  # TensorRT
             if True and im_batch.shape != self.bindings['images'].shape:
-                i_in, i_out = (self.model_.get_binding_index(x) for x in ('images', 'output'))
-                self.context.set_binding_shape(i_in, im_batch.shape)  # reshape if dynamic
-                self.bindings['images'] = self.bindings['images']._replace(shape=im_batch.shape)
-                self.bindings['output'].data.resize_(tuple(self.context.get_binding_shape(i_out)))
+                i_in, i_out = (self.model_.get_binding_index(x)
+                               for x in ('images', 'output'))
+                self.context.set_binding_shape(
+                    i_in, im_batch.shape)  # reshape if dynamic
+                self.bindings['images'] = self.bindings['images']._replace(
+                    shape=im_batch.shape)
+                self.bindings['output'].data.resize_(
+                    tuple(self.context.get_binding_shape(i_out)))
             s = self.bindings['images'].shape
             assert im_batch.shape == s, f"input size {im_batch.shape} {'>' if self.dynamic else 'not equal to'} max model size {s}"
             self.binding_addrs['images'] = int(im_batch.data_ptr())
