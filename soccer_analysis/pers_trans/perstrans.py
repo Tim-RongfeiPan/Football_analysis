@@ -1,7 +1,7 @@
 
 import sys
 sys.path.append('D:\\vscoding\\Degree Project\\soccer_analysis\\pers_trans')
-print(sys.path)
+# print(sys.path)
 import cv2 as cv
 import numpy as np
 import scipy.io as sio
@@ -250,7 +250,7 @@ def perstrans(source_image, pos):
     new_dst = np.linalg.inv(refined_h)@test_point
 
     # logger.info(new_dst/new_dst[-1])
-    return seg_map, im_out, new_dst/new_dst[-1]
+    return retrieved_image ,seg_map, im_out, new_dst/new_dst[-1]
 
 
 if __name__ == "__main__":

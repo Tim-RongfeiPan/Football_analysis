@@ -3,10 +3,11 @@ import logging
 import os
 import sys
 from pathlib import Path
-
+import numpy as np
 import cv2
 import torch
 import torch.backends.cudnn as cudnn
+from loguru import logger
 
 from strong_sort.strong_sort import StrongSORT
 from strong_sort.utils.parser import get_config
@@ -220,7 +221,6 @@ def run(
                 # Rescale boxes from img_size to im0 size
                 det[:, :4] = scale_coords(
                     im.shape[2:], det[:, :4], im0.shape).round()
-
                 # Print results
                 for c in det[:, -1].unique():
                     n = (det[:, -1] == c).sum()  # detections per class
@@ -250,16 +250,18 @@ def run(
 
                         if show_perstrans:
                             # TODO: perspective transformation
-
+                            logger.info('bboxes')
+                            logger.info(bboxes)
                             posx = int((bboxes[0] + bboxes[2]) / 2)
                             posy = int(bboxes[3])
-                            pos = [int(posx * 1280 / 1466),
-                                   int(posy * 720 / 783), 1]
-                            seg_map, im_out, out = perstrans(
-                                im0, pos)
+                            pos = [int(posx * 1280 / 1280),
+                                   int(posy * 720 / 720), 1]
+                            retrieved_image,seg_map, im_out, out = perstrans(
+                                imc, pos)
                             out = (int(out[0]), int(out[1]))
                             pers_point.append(out)
-                            print(out)
+                            logger.info('out')
+                            logger.info(out)
 
                         if save_txt:
                             # to MOT format
@@ -298,6 +300,19 @@ def run(
                                     isinstance(path, list) and len(path) > 1) else ''
                                 save_one_box(bboxes, imc, file=save_dir / 'crops' /
                                              txt_file_name / names[c] / f'{id}' / f'{p.stem}.jpg', BGR=True)
+
+
+                    im_out = cv2.resize(im_out, (1280, 720))
+                    cv2.imwrite('save/test_imc.jpg', imc)
+                    cv2.imwrite('save/test_im0.jpg', im0)
+                    cv2.imwrite('save/test_retrieved_image.jpg', retrieved_image)
+                    cv2.imwrite('save/test_seg_map.jpg', seg_map)
+                    model_image = cv2.imread('pers_trans/model.jpg')
+                    model_image = cv2.resize(model_image, (115, 74))
+                    for point in pers_point:
+                        cv2.circle(model_image, point, 1, (0, 0, 255), -1)
+                    model_image = cv2.resize(model_image, (1280, 720))
+                    cv2.imwrite('save/test_model_image.jpg', model_image)
 
                 LOGGER.info(
                     f'{s}Done. YOLO:({t3 - t2:.3f}s), StrongSORT:({t5 - t4:.3f}s)')
