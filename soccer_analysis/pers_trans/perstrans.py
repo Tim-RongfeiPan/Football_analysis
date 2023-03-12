@@ -193,8 +193,6 @@ def perstrans(source_image, pos):
         database_features = data['features']
         database_cameras = data['cameras']
 
-    print(source_image)
-    print(source_image.shape)
     image = cv.resize(source_image, (1280, 720))
 
     edge_map, seg_map = testing_two_GAN(image, current_directory)

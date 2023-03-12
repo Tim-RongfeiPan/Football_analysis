@@ -1,41 +1,71 @@
 ------------ Options -------------
 advertising_image: None
+agnostic_nms: False
 aspect_ratio: 1.0
+augment: False
 batchSize: 1
-checkpoints_dir: D:\vscoding\Degree Project\pers_trans\python_codes\pytorch-two-GAN-master\checkpoints
-dataroot: D:\vscoding\Degree Project\pers_trans\python_codes\pytorch-two-GAN-master\datasets\soccer_seg_detection
+checkpoints_dir: D:\vscoding\Degree Project\soccer_analysis\pers_trans\pytorch-two-GAN-master\checkpoints
+classes: None
+conf_thres: 0.5
+config_strongsort: strong_sort/configs/strong_sort.yaml
+dataroot: D:\vscoding\Degree Project\soccer_analysis\pers_trans\pytorch-two-GAN-master\datasets\soccer_seg_detection
 dataset_mode: single
+device: 
 display_id: 1
 display_port: 8097
 display_winsize: 256
+dnn: False
+eval: False
+exist_ok: False
 fineSize: 1024
 gpu_ids: []
+half: False
+hide_class: False
+hide_conf: False
+hide_labels: False
 how_many: 1
 image: None
+imgsz: [640]
 init_type: normal
 input_nc: 3
+iou_thres: 0.5
 isTrain: False
+line_thickness: 3
 loadSize: 1024
 max_dataset_size: inf
+max_det: 1000
 model: two_pix2pix
 nThreads: 2
 n_layers_D: 3
-name: D:\vscoding\Degree Project\pers_trans\python_codes\pytorch-two-GAN-master\checkpoints\soccer_seg_detection_pix2pix
+name: D:\vscoding\Degree Project\soccer_analysis\pers_trans\pytorch-two-GAN-master\checkpoints\soccer_seg_detection_pix2pix
 ndf: 64
 ngf: 64
 no_dropout: False
 no_flip: False
 norm: batch
+nosave: False
 ntest: inf
 output_nc: 1
 phase: test
+project: pers_trans\options\runs\track
 resize_or_crop: resize_and_crop
-results_dir: D:\vscoding\Degree Project\pers_trans\python_codes\pytorch-two-GAN-master\results
+results_dir: D:\vscoding\Degree Project\soccer_analysis\pers_trans\pytorch-two-GAN-master\results
+save_conf: True
+save_crop: True
+save_txt: True
+save_vid: True
 serial_batches: False
-source: data/images/test_img0.png
-weights: ['weights/best.pt']
+show_perstrans: True
+show_team: True
+show_vid: False
+source: videos/ettan_test.mp4
+strong_sort_weights: pers_trans\options\weights\osnet_x0_25_msmt17.pt
+update: False
+visualize: False
+weights: pers_trans\options\yolov5s.pt
 which_direction: AtoB
 which_epoch: latest
 which_model_netD: basic
 which_model_netG: unet_256
+yolo_weights: [WindowsPath('weights/best.pt')]
 -------------- End ----------------

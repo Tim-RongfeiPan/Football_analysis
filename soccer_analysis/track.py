@@ -247,7 +247,6 @@ def run(
                         bboxes = output[0:4]
                         id = output[4]
                         cls = output[5]
-                        print(bboxes)
 
                         if show_perstrans:
                             # TODO: perspective transformation
@@ -256,14 +255,8 @@ def run(
                             posy = int(bboxes[3])
                             pos = [int(posx * 1280 / 1466),
                                    int(posy * 720 / 783), 1]
-                            print(pos)
-                            # sys.path.append(
-                            #     'd:/vscoding/Degree Project/pers_trans/python_codes')
-                            # import perstrans
-                            #source = ?
-                            source_image = cv2.imread(source)
                             seg_map, im_out, out = perstrans(
-                                source_image, pos)
+                                im0, pos)
                             out = (int(out[0]), int(out[1]))
                             pers_point.append(out)
                             print(out)
