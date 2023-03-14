@@ -1,13 +1,15 @@
 datasets/
 .vscode/
 runs/
-yolov5/runs
-yolov5_tracking/runs
-yolov5_tracking/yolov5
+yolov5_tracking/
+yolov5/
 
 /pers_trans/python_codes/pytorch-two-GAN-master/checkpoints
 /pers_trans/python_codes/pytorch-two-GAN-master/datasets
 *.pth
 *.mp4
+*.pt
 soccer_analysis/yolov5
 soccer_analysis/runs
+**/QuantSportParser.py
+soccer_analysis/event_data/QuantSportParser.py

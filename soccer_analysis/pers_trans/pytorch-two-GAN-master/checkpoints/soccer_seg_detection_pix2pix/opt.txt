@@ -67,5 +67,5 @@ which_direction: AtoB
 which_epoch: latest
 which_model_netD: basic
 which_model_netG: unet_256
-yolo_weights: [WindowsPath('weights/best.pt')]
+yolo_weights: [WindowsPath('datasets/best.pt')]
 -------------- End ----------------

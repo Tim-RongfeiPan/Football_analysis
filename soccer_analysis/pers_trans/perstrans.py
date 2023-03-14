@@ -1,5 +1,5 @@
-
 import sys
+
 sys.path.append('D:\\vscoding\\Degree Project\\soccer_analysis\\pers_trans')
 # print(sys.path)
 import cv2 as cv
@@ -24,7 +24,6 @@ import argparse
 from deep.siamese import BranchNetwork, SiameseNetwork
 from deep.camera_dataset import CameraDataset
 
-
 # print(sys.path)
 
 
@@ -40,8 +39,8 @@ def generate_HOG_feature(edge_map):
 
     im_h, im_w = 180, 320
 
-    hog = cv.HOGDescriptor(win_size, block_size,
-                           block_stride, cell_size, n_bins)
+    hog = cv.HOGDescriptor(win_size, block_size, block_stride, cell_size,
+                           n_bins)
 
     h, w, c = edge_map.shape
     # n number of test images
@@ -71,14 +70,12 @@ def generate_deep_feature(edge_map, deep_model_directory):
     model_name = deep_model_directory
     cuda_id = 0  # use -1 for CPU and 0 for GPU
 
-    normalize = transforms.Normalize(mean=[0.0188],
-                                     std=[0.128])
+    normalize = transforms.Normalize(mean=[0.0188], std=[0.128])
 
-    data_transform = transforms.Compose(
-        [transforms.ToTensor(),
-         normalize,
-         ]
-    )
+    data_transform = transforms.Compose([
+        transforms.ToTensor(),
+        normalize,
+    ])
 
     # resize image
     pivot_image = edge_map
@@ -86,8 +83,8 @@ def generate_deep_feature(edge_map, deep_model_directory):
     pivot_image = cv.resize(pivot_image, (320, 180))
 
     pivot_image = cv.cvtColor(pivot_image, cv.COLOR_RGB2GRAY)
-    pivot_image = np.reshape(
-        pivot_image, (1, pivot_image.shape[0], pivot_image.shape[1]))
+    pivot_image = np.reshape(pivot_image,
+                             (1, pivot_image.shape[0], pivot_image.shape[1]))
     # print('Note: assume input image resolution is 180 x 320 (h x w)')
 
     data_loader = CameraDataset(pivot_image,
@@ -102,8 +99,8 @@ def generate_deep_feature(edge_map, deep_model_directory):
     net = SiameseNetwork(branch)
 
     if os.path.isfile(model_name):
-        checkpoint = torch.load(
-            model_name, map_location=lambda storage, loc: storage)
+        checkpoint = torch.load(model_name,
+                                map_location=lambda storage, loc: storage)
         net.load_state_dict(checkpoint['state_dict'])
         # print('load model file from {}.'.format(model_name))
     else:
@@ -135,7 +132,7 @@ def generate_deep_feature(edge_map, deep_model_directory):
 def testing_two_GAN(image, directory):
 
     opt = TestOptions().parse(directory)
-    opt.nThreads = 1   # test code only supports nThreads = 1
+    opt.nThreads = 1  # test code only supports nThreads = 1
     opt.batchSize = 1  # test code only supports batchSize = 1
     opt.serial_batches = True  # no shuffle
     opt.no_flip = True  # no flip
@@ -149,8 +146,12 @@ def testing_two_GAN(image, directory):
     image = Image.fromarray(image)
     osize = [256, 256]
     cropsize = osize
-    image = transforms.Compose([transforms.Resize(osize, Image.Resampling.BICUBIC), transforms.RandomCrop(
-        cropsize), transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])(image)
+    image = transforms.Compose([
+        transforms.Resize(osize, Image.Resampling.BICUBIC),
+        transforms.RandomCrop(cropsize),
+        transforms.ToTensor(),
+        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+    ])(image)
     image = image.unsqueeze(0)
 
     model.set_input(image)
@@ -210,8 +211,12 @@ def perstrans(source_image, pos):
     template_w = 115
 
     flann = pyflann.FLANN()
-    result, _ = flann.nn(
-        database_features, test_features[query_index], 1, algorithm="kdtree", trees=8, checks=64)
+    result, _ = flann.nn(database_features,
+                         test_features[query_index],
+                         1,
+                         algorithm="kdtree",
+                         trees=8,
+                         checks=64)
     retrieved_index = result[0]
 
     retrieved_camera_data = database_cameras[retrieved_index]
@@ -225,8 +230,12 @@ def perstrans(source_image, pos):
     retrieved_h = IouUtil.template_to_image_homography_uot(
         retrieved_camera, template_h, template_w)
 
-    retrieved_image = SyntheticUtil.camera_to_edge_image(retrieved_camera_data, model_points, model_line_index,
-                                                         im_h=720, im_w=1280, line_width=2)
+    retrieved_image = SyntheticUtil.camera_to_edge_image(retrieved_camera_data,
+                                                         model_points,
+                                                         model_line_index,
+                                                         im_h=720,
+                                                         im_w=1280,
+                                                         line_width=2)
 
     query_image = edge_map[:, :, :]
 
@@ -240,25 +249,30 @@ def perstrans(source_image, pos):
     h_retrieved_to_query = SyntheticUtil.find_transform(
         retrieved_dist, query_dist)
 
-    refined_h = h_retrieved_to_query@retrieved_h
+    refined_h = h_retrieved_to_query @ retrieved_h
     # @ === np.dot()
 
-    im_out = cv.warpPerspective(seg_map, np.linalg.inv(
-        refined_h), (115, 74), borderMode=cv.BORDER_CONSTANT)
+    im_out = cv.warpPerspective(seg_map,
+                                np.linalg.inv(refined_h), (115, 74),
+                                borderMode=cv.BORDER_CONSTANT)
 
     test_point = np.array(pos)
-    new_dst = np.linalg.inv(refined_h)@test_point
+    new_dst = np.linalg.inv(refined_h) @ test_point
 
     # logger.info(new_dst/new_dst[-1])
-    return retrieved_image ,seg_map, im_out, new_dst/new_dst[-1]
+    return retrieved_image, seg_map, im_out, new_dst / new_dst[-1]
 
 
 if __name__ == "__main__":
     address_parser = argparse.ArgumentParser()
-    address_parser.add_argument(
-        '--image', required=True, type=str, help='sth like "./my_pic.png" ')
-    address_parser.add_argument('--advertising_image', required=False,
-                                type=str, help='sth like "./my_billboard.png" ')
+    address_parser.add_argument('--image',
+                                required=True,
+                                type=str,
+                                help='sth like "./my_pic.png" ')
+    address_parser.add_argument('--advertising_image',
+                                required=False,
+                                type=str,
+                                help='sth like "./my_billboard.png" ')
 
     address_args = address_parser.parse_args()
     out = perstrans(address_args.image, [0, 720, 1])
