@@ -110,7 +110,7 @@ def get_eventdata_byteam(path, teamname):
     ----------
     path : string
         path of xlsx file
-    name : string
+    teamname : string
         team name
 
     Returns
@@ -122,7 +122,7 @@ def get_eventdata_byteam(path, teamname):
     data = wb['Sheet1']
     name_list = []
     for i in range(2, data.max_row):
-        if data.cell(i, 8).value.find(name) != -1:
+        if data.cell(i, 8).value.find(teamname) != -1:
             name_info = []
             for j in range(1, data.max_column):
                 name_info.append(data.cell(i, j).value)
@@ -136,10 +136,10 @@ if __name__ == '__main__':
     # out = get_eventdata_byname(path, name)
     # dtime = datetime.time(0, 8, 29)
     # out = get_eventdata_bytime(path, dtime)
-    name = 'Christer Gustafsson'
-    out = get_eventdata_byplayer(path, name)
-    # name = 'IF Brommapojkarna'
-    # out = get_eventdata_byteam(path, name)
+    # name = 'Christer Gustafsson'
+    # out = get_eventdata_byplayer(path, name)
+    name = 'IF Brommapojkarna'
+    out = get_eventdata_byteam(path, name)
     print(out)
     print('=============')
     print(out[0])
