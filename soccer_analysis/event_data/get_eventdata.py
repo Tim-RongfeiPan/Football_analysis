@@ -103,14 +103,43 @@ def get_eventdata_byplayer(path, name):
     return name_list
 
 
+def get_eventdata_byteam(path, teamname):
+    """get event data by searching player name
+
+    Parameters
+    ----------
+    path : string
+        path of xlsx file
+    name : string
+        team name
+
+    Returns
+    -------
+    list[list]
+        list of info in row with corresponding team name
+    """
+    wb = load_workbook(path)
+    data = wb['Sheet1']
+    name_list = []
+    for i in range(2, data.max_row):
+        if data.cell(i, 8).value.find(name) != -1:
+            name_info = []
+            for j in range(1, data.max_column):
+                name_info.append(data.cell(i, j).value)
+            name_list.append(name_info)
+    return name_list
+
+
 if __name__ == '__main__':
     path = 'datasets/IK Frej Täby-IF Brommapojkarna(0-1).xlsx'
     # name = 'Shots'
     # out = get_eventdata_byname(path, name)
     # dtime = datetime.time(0, 8, 29)
     # out = get_eventdata_bytime(path, dtime)
-    name = 'Alexander Seger'
+    name = 'Christer Gustafsson'
     out = get_eventdata_byplayer(path, name)
+    # name = 'IF Brommapojkarna'
+    # out = get_eventdata_byteam(path, name)
     print(out)
     print('=============')
     print(out[0])
