@@ -68,7 +68,7 @@ def run(
         strong_sort_weights=WEIGHTS /
     'osnet_x0_25_msmt17.pt',  # model.pt path,
         config_strongsort=ROOT / 'strong_sort/configs/strong_sort.yaml',
-        no_Strongsort=False,  # disable strong sort and trackign
+        no_Strongsort=False,  # disable strong sort and tracking
         imgsz=(640, 640),  # inference size (height, width)
         conf_thres=0.25,  # confidence threshold
         iou_thres=0.45,  # NMS IOU threshold
@@ -150,27 +150,29 @@ def run(
         None
     ] * nr_sources, [None] * nr_sources
 
-    # initialize StrongSORT
-    cfg = get_config()
-    cfg.merge_from_file(config_strongsort)
+    if not no_Strongsort:
+        # initialize StrongSORT
+        cfg = get_config()
+        cfg.merge_from_file(config_strongsort)
 
-    # Create as many strong sort instances as there are video sources
-    strongsort_list = []
-    for i in range(nr_sources):
-        strongsort_list.append(
-            StrongSORT(
-                strong_sort_weights,
-                device,
-                half,
-                max_dist=cfg.STRONGSORT.MAX_DIST,
-                max_iou_distance=cfg.STRONGSORT.MAX_IOU_DISTANCE,
-                max_age=cfg.STRONGSORT.MAX_AGE,
-                n_init=cfg.STRONGSORT.N_INIT,
-                nn_budget=cfg.STRONGSORT.NN_BUDGET,
-                mc_lambda=cfg.STRONGSORT.MC_LAMBDA,
-                ema_alpha=cfg.STRONGSORT.EMA_ALPHA,
-            ))
-        strongsort_list[i].model.warmup()
+        # Create as many strong sort instances as there are video sources
+        strongsort_list = []
+        for i in range(nr_sources):
+            strongsort_list.append(
+                StrongSORT(
+                    strong_sort_weights,
+                    device,
+                    half,
+                    max_dist=cfg.STRONGSORT.MAX_DIST,
+                    max_iou_distance=cfg.STRONGSORT.MAX_IOU_DISTANCE,
+                    max_age=cfg.STRONGSORT.MAX_AGE,
+                    n_init=cfg.STRONGSORT.N_INIT,
+                    nn_budget=cfg.STRONGSORT.NN_BUDGET,
+                    mc_lambda=cfg.STRONGSORT.MC_LAMBDA,
+                    ema_alpha=cfg.STRONGSORT.EMA_ALPHA,
+                ))
+            strongsort_list[i].model.warmup()
+
     outputs = [None] * nr_sources
 
     # Run tracking
@@ -232,10 +234,11 @@ def run(
             imc = im0.copy() if save_crop else im0  # for save_crop
 
             annotator = Annotator(im0, line_width=2, pil=not ascii)
-            if cfg.STRONGSORT.ECC:  # camera motion compensation
-                # 21.6%
-                strongsort_list[i].tracker.camera_update(
-                    prev_frames[i], curr_frames[i])
+            if not no_Strongsort:
+                if cfg.STRONGSORT.ECC:  # camera motion compensation
+                    # 21.6%
+                    strongsort_list[i].tracker.camera_update(
+                        prev_frames[i], curr_frames[i])
 
             if det is not None and len(det):
                 # Rescale boxes from img_size to im0 size
