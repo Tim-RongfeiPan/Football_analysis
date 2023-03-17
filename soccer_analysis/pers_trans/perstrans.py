@@ -130,7 +130,6 @@ def generate_deep_feature(edge_map, deep_model_directory):
 
 
 def testing_two_GAN(image, directory):
-
     opt = TestOptions().parse(directory)
     opt.nThreads = 1  # test code only supports nThreads = 1
     opt.batchSize = 1  # test code only supports batchSize = 1
