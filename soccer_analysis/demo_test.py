@@ -68,7 +68,7 @@ def run(
         strong_sort_weights=WEIGHTS /
     'osnet_x0_25_msmt17.pt',  # model.pt path,
         config_strongsort=ROOT / 'strong_sort/configs/strong_sort.yaml',
-        no_Strongsort=False,  # disable strong sort and tracking
+        no_strongSort=False,  # disable strong sort tracking
         imgsz=(640, 640),  # inference size (height, width)
         conf_thres=0.25,  # confidence threshold
         iou_thres=0.45,  # NMS IOU threshold
@@ -150,7 +150,7 @@ def run(
         None
     ] * nr_sources, [None] * nr_sources
 
-    if not no_Strongsort:
+    if not no_strongSort:
         # initialize StrongSORT
         cfg = get_config()
         cfg.merge_from_file(config_strongsort)
@@ -234,7 +234,7 @@ def run(
             imc = im0.copy() if save_crop else im0  # for save_crop
 
             annotator = Annotator(im0, line_width=2, pil=not ascii)
-            if not no_Strongsort:
+            if not no_strongSort:
                 if cfg.STRONGSORT.ECC:  # camera motion compensation
                     # 21.6%
                     strongsort_list[i].tracker.camera_update(
@@ -257,9 +257,27 @@ def run(
                 # pass detections to strongsort
                 t4 = time_sync()
                 # 48.1%
-                outputs[i] = strongsort_list[i].update(xywhs.cpu(),
-                                                       confs.cpu(), clss.cpu(),
-                                                       im0)
+                if not no_strongSort:
+                    outputs[i] = strongsort_list[i].update(
+                        xywhs.cpu(), confs.cpu(), clss.cpu(), im0)
+                else:
+                    newdet = []
+                    for ii, detects in enumerate(det):
+                        newele = []
+                        cur = 0
+                        for jj, ele in enumerate(detects):
+                            if jj == 4:
+                                cur = ele.cpu().detach().numpy().tolist()
+                            elif jj == 5:
+                                newele.extend([
+                                    ii,
+                                    ele.cpu().detach().numpy().tolist(), cur
+                                ])
+                            else:
+                                newele.append(
+                                    ele.cpu().detach().numpy().tolist())
+                        newdet.append(newele)
+                    outputs[i] = np.array(newdet)
                 t5 = time_sync()
                 dt[3] += t5 - t4
                 # draw boxes for visualization
@@ -347,19 +365,20 @@ def run(
                                              txt_file_name / names[c] /
                                              f'{id}' / f'{p.stem}.jpg',
                                              BGR=True)
-
-                    im_out = cv2.resize(im_out, (1280, 720))
-                    cv2.imwrite('runs/save/test_imc.jpg', imc)
-                    cv2.imwrite('runs/save/test_im0.jpg', im0)
-                    cv2.imwrite('runs/save/test_retrieved_image.jpg',
-                                retrieved_image)
-                    cv2.imwrite('runs/save/test_seg_map.jpg', seg_map)
-                    model_image = cv2.imread('pers_trans/model.jpg')
-                    model_image = cv2.resize(model_image, (115, 74))
-                    for point in pers_point:
-                        cv2.circle(model_image, point, 1, (0, 0, 255), -1)
-                    model_image = cv2.resize(model_image, (1280, 720))
-                    cv2.imwrite('runs/save/test_model_image.jpg', model_image)
+                    if show_perstrans:
+                        im_out = cv2.resize(im_out, (1280, 720))
+                        cv2.imwrite('runs/save/test_imc.jpg', imc)
+                        cv2.imwrite('runs/save/test_im0.jpg', im0)
+                        cv2.imwrite('runs/save/test_retrieved_image.jpg',
+                                    retrieved_image)
+                        cv2.imwrite('runs/save/test_seg_map.jpg', seg_map)
+                        model_image = cv2.imread('pers_trans/model.jpg')
+                        model_image = cv2.resize(model_image, (115, 74))
+                        for point in pers_point:
+                            cv2.circle(model_image, point, 1, (0, 0, 255), -1)
+                        model_image = cv2.resize(model_image, (1280, 720))
+                        cv2.imwrite('runs/save/test_model_image.jpg',
+                                    model_image)
 
                 LOGGER.info(
                     f'{s}Done. YOLO:({t3 - t2:.3f}s), StrongSORT:({t5 - t4:.3f}s)'
@@ -515,6 +534,10 @@ def parse_opt():
                         default=False,
                         action='store_true',
                         help='hide IDs')
+    parser.add_argument('--no-strongSort',
+                        default=False,
+                        action='store_true',
+                        help='disable strong sort')
     parser.add_argument('--half',
                         action='store_true',
                         help='use FP16 half-precision inference')

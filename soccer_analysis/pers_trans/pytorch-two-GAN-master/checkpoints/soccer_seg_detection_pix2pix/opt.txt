@@ -42,6 +42,7 @@ ndf: 64
 ngf: 64
 no_dropout: False
 no_flip: False
+no_strongSort: False
 norm: batch
 nosave: False
 ntest: inf
