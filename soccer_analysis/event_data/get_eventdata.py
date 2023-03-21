@@ -11,10 +11,9 @@
 
 # here put the import lib
 
-from msilib.schema import Class
-from matplotlib import docstring
 from openpyxl import *
 import datetime
+import cv2
 
 
 class Get_Eventdata:
@@ -128,14 +127,30 @@ class Get_Eventdata:
         return pos_list
 
 
+class Get_Videodata:
+    """Get_Videodata."""
+
+    def __init__(self, video_path, time_offset):
+        super(Get_Videodata, self).__init__()
+        self.video = cv2.VideoCapture(video_path)
+        self.fps = cv2.CAP_PROP_FPS
+        self.time_offset = time_offset * self.fps  #number of frames
+
+    def get_videodata_bytime(self, *time):
+        if len(time) == 1:
+            time = (time - 4, time + 4)
+        return time
+
+
 if __name__ == '__main__':
-    path = 'datasets/IK Frej Täby-IF Brommapojkarna(0-1).xlsx'
-    xlsx = Get_Eventdata(path)
-    name = 'Shots'
-    # dtime = datetime.time(0, 8, 29)
-    # name = 'Christer Gustafsson'
-    # name = 'IF Brommapojkarna'
-    out = xlsx.get_position_byevent(name)
-    print(out)
-    print('=============')
-    print(out[0])
+    pass
+    # path = 'datasets/IK Frej Täby-IF Brommapojkarna(0-1).xlsx'
+    # xlsx = Get_Eventdata(path)
+    # name = 'Shots'
+    # # dtime = datetime.time(0, 8, 29)
+    # # name = 'Christer Gustafsson'
+    # # name = 'IF Brommapojkarna'
+    # out = xlsx.get_position_byevent(name)
+    # print(out)
+    # print('=============')
+    # print(out[0])

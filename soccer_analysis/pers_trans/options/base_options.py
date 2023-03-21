@@ -220,7 +220,8 @@ class BaseOptions():
                                  action='store_true',
                                  help='display tracking video results')
         self.parser.add_argument('--show-team',
-                                 action='store_true',
+                                 type=Path,
+                                 default=WEIGHTS / 'frej-bp.txt',
                                  help='save and show team assignment')
         self.parser.add_argument('--save-txt',
                                  action='store_true',

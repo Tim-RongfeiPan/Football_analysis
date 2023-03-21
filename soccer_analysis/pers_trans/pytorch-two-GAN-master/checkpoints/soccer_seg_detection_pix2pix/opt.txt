@@ -57,8 +57,8 @@ save_txt: True
 save_vid: True
 serial_batches: False
 show_perstrans: True
-show_team: True
-show_vid: False
+show_team: datasets\frej-bp.txt
+show_vid: True
 source: videos/ettan_test.mp4
 strong_sort_weights: pers_trans\options\weights\osnet_x0_25_msmt17.pt
 update: False

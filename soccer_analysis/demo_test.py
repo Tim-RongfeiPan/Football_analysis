@@ -75,7 +75,7 @@ def run(
         max_det=1000,  # maximum detections per image
         device='',  # cuda device, i.e. 0 or 0,1,2,3 or cpu
         show_vid=False,  # show results
-        show_team=False,  # save and show team assignment
+        show_team='datasets/frej-bp.txt',  # save and show team assignment
         save_txt=False,  # save results to *.txt
         save_conf=False,  # save confidences in --save-txt labels
         show_perstrans=False,  # show perspective transformation result
@@ -290,8 +290,6 @@ def run(
                         cls = output[5]
 
                         if show_perstrans:
-                            logger.info('bboxes')
-                            logger.info(bboxes)
                             posx = int((bboxes[0] + bboxes[2]) / 2)
                             posy = int(bboxes[3])
                             pos = [
@@ -302,8 +300,6 @@ def run(
                                 imc, pos)
                             out = (int(out[0]), int(out[1]))
                             pers_point.append(out)
-                            logger.info('out')
-                            logger.info(out)
 
                         if save_txt:
                             # to MOT format
@@ -333,7 +329,7 @@ def run(
                                                     save=False,
                                                     BGR=True)
                                 ########################################
-                                infoFile = '../datasets/test/frej-bp.txt'
+                                infoFile = show_team
                                 colorName = team_assignment(crop, infoFile)
                                 #########################################
                             c = int(cls)  # integer class
@@ -471,7 +467,8 @@ def parse_opt():
                         action='store_true',
                         help='display tracking video results')
     parser.add_argument('--show-team',
-                        action='store_true',
+                        type=Path,
+                        default=WEIGHTS / 'frej-bp.txt',
                         help='save and show team assignment')
     parser.add_argument('--save-txt',
                         action='store_true',

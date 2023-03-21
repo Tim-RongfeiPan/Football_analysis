@@ -256,7 +256,6 @@ def run(
                         cls = output[5]
 
                         if show_perstrans:
-                            # TODO: perspective transformation
                             logger.info('bboxes')
                             logger.info(bboxes)
                             posx = int((bboxes[0] + bboxes[2]) / 2)
