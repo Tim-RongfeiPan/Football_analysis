@@ -1,13 +1,15 @@
-import re
+#!/usr/bin/env python
+# -*- encoding: utf-8 -*-
+'''
+@File    :   test.py
+@Time    :   2023/03/22 08:45:57
+@Author  :   Rongfei Pan
+@Version :   1.0
+@Contact :   rongfei@kth.se 1838863836prf@gmail.com
+@Desc    :   None
+'''
 
-# from team_assignment import team_assignment
+# here put the import lib
 
-
-show_team = True
-infoFile = '../datasets/frej-bp.txt'
-
-if show_team:
-    with open(infoFile, 'r') as f:
-        data = f.read()
-        color_list = re.findall(r'team, (.*?) [J,j]erseys[)]', data)
-        print(color_list)
+if __name__ == "__main__":
+    pass

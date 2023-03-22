@@ -11,6 +11,7 @@
 
 # here put the import lib
 
+from matplotlib.pyplot import step
 from openpyxl import *
 import datetime
 import cv2
@@ -133,13 +134,28 @@ class Get_Videodata:
     def __init__(self, video_path, time_offset):
         super(Get_Videodata, self).__init__()
         self.video = cv2.VideoCapture(video_path)
-        self.fps = cv2.CAP_PROP_FPS
-        self.time_offset = time_offset * self.fps  #number of frames
+        self.fps = self.video.get(cv2.CAP_PROP_FPS)
+        self.time_offset = time_offset * self.fps  #number of f rames
 
-    def get_videodata_bytime(self, *time):
+    def get_videodata_bytime(self, steps_frame, *time):
         if len(time) == 1:
-            time = (time - 4, time + 4)
-        return time
+            time = (time[0] * self.fps - steps_frame,
+                    time[0] * self.fps + steps_frame)
+        t1 = int(time[0]) + self.time_offset * self.fps
+        t2 = int(time[1]) + self.time_offset * self.fps
+        i = 0
+        out = []
+        while self.video.isOpened():
+            j, frame = self.video.read()
+            if j:
+                i += 1
+                if i >= t1 and i <= t2:
+                    out.append(frame)
+                elif i > t2:
+                    return out
+            else:
+                print('end')
+        return out
 
 
 if __name__ == '__main__':
@@ -154,3 +170,7 @@ if __name__ == '__main__':
     # print(out)
     # print('=============')
     # print(out[0])
+    path = 'datasets/ettan_test.mp4'
+    vi = Get_Videodata(path, 0)
+    out = vi.get_videodata_bytime(2, 10)
+    print(len(out))
