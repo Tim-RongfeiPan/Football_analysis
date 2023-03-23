@@ -239,7 +239,6 @@ def run(
                     # 21.6%
                     strongsort_list[i].tracker.camera_update(
                         prev_frames[i], curr_frames[i])
-
             if det is not None and len(det):
                 # Rescale boxes from img_size to im0 size
                 det[:, :4] = scale_coords(im.shape[2:], det[:, :4],
@@ -293,8 +292,8 @@ def run(
                             posx = int((bboxes[0] + bboxes[2]) / 2)
                             posy = int(bboxes[3])
                             pos = [
-                                int(posx * 1280 / 1280),
-                                int(posy * 720 / 720), 1
+                                int(posx * 1280 / 1920),
+                                int(posy * 720 / 1080), 1
                             ]
                             retrieved_image, seg_map, im_out, out = perstrans(
                                 imc, pos)

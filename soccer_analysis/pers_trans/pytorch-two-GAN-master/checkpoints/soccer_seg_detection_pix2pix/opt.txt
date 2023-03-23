@@ -51,15 +51,15 @@ phase: test
 project: pers_trans\options\runs\track
 resize_or_crop: resize_and_crop
 results_dir: D:\vscoding\Degree Project\soccer_analysis\pers_trans\pytorch-two-GAN-master\results
-save_conf: True
-save_crop: True
-save_txt: True
-save_vid: True
+save_conf: False
+save_crop: False
+save_txt: False
+save_vid: False
 serial_batches: False
-show_perstrans: True
-show_team: datasets\frej-bp.txt
-show_vid: True
-source: videos/ettan_test.mp4
+show_perstrans: False
+show_team: pers_trans\options\weights\frej-bp.txt
+show_vid: False
+source: pers_trans\options\data\images
 strong_sort_weights: pers_trans\options\weights\osnet_x0_25_msmt17.pt
 update: False
 visualize: False
@@ -68,5 +68,5 @@ which_direction: AtoB
 which_epoch: latest
 which_model_netD: basic
 which_model_netG: unet_256
-yolo_weights: [WindowsPath('datasets/best.pt')]
+yolo_weights: pers_trans\options\weights\yolov5m.pt
 -------------- End ----------------

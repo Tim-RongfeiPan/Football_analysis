@@ -153,7 +153,7 @@ class Get_Videodata:
             time (datetime.time): time
 
         Returns:
-            frame
+            frame (list): single image
         """
         #time in second
         time = time.hour * 60 * 60 + time.minute * 60 + time.second
@@ -193,4 +193,4 @@ if __name__ == '__main__':
     dtime = datetime.time(0, 0, 46)
     vi = Get_Videodata(path, 0)
     out = vi.get_videodata_bytime(2, dtime)
-    print(len(out))
+    # print(len(out))
