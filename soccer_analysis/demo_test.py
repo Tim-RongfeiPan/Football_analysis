@@ -136,11 +136,17 @@ class Analysis(object):
         conf_thres = 0.25  # confidence threshold
         iou_thres = 0.45
         nosave = False
+        show_perstrans = True
+        show_team = True
         save_crop = True
         max_det = 1000
         show_vid = False
         save_vid = False
         update = False
+        hide_labels = False
+        hide_conf = False
+        hide_class = False
+
         nr_sources = 1
         outputs = [None] * nr_sources
 
@@ -244,7 +250,7 @@ class Analysis(object):
                     for c in det[:, -1].unique():
                         n = (det[:, -1] == c).sum()  # detections per class
                         # add to string
-                        s += f"{n} {self,names[int(c)]}{'s' * (n > 1)}, "
+                        s += f"{n} {self.names[int(c)]}{'s' * (n > 1)}, "
 
                     xywhs = xyxy2xywh(det[:, 0:4])
                     confs = det[:, 4]
@@ -298,7 +304,7 @@ class Analysis(object):
                                 out = (int(out[0]), int(out[1]))
                                 pers_point.append(out)
 
-                            if save_txt:
+                            if self.save_txt:
                                 # to MOT format
                                 bbox_left = output[0]
                                 bbox_top = output[1]
@@ -333,17 +339,18 @@ class Analysis(object):
                                 id = int(id)  # integer id
                                 if show_team:
                                     label = None if hide_labels else (
-                                        f'{id} {names[c]} {colorName}'
+                                        f'{id} {self.names[c]} {colorName}'
                                         if hide_conf else
                                         (f'{id} {conf:.2f} {colorName}'
                                          if hide_class else
-                                         f'{id} {names[c]} {conf:.2f} {colorName}'
+                                         f'{id} {self.names[c]} {conf:.2f} {colorName}'
                                          ))
                                 else:
                                     label = None if hide_labels else (
-                                        f'{id} {names[c]}' if hide_conf else
+                                        f'{id} {self.names[c]}'
+                                        if hide_conf else
                                         (f'{id} {conf:.2f}' if hide_class else
-                                         f'{id} {names[c]} {conf:.2f}'))
+                                         f'{id} {self.names[c]} {conf:.2f}'))
 
                                 annotator.box_label(bboxes,
                                                     label,
@@ -355,9 +362,10 @@ class Analysis(object):
                                         and len(path) > 1) else ''
                                     save_one_box(bboxes,
                                                  imc,
-                                                 file=save_dir / 'crops' /
-                                                 txt_file_name / names[c] /
-                                                 f'{id}' / f'{p.stem}.jpg',
+                                                 file=self.save_dir / 'crops' /
+                                                 txt_file_name /
+                                                 self.names[c] / f'{id}' /
+                                                 f'{p.stem}.jpg',
                                                  BGR=True)
                         if show_perstrans:
                             im_out = cv2.resize(im_out, (1280, 720))
@@ -416,7 +424,7 @@ class Analysis(object):
             f'Speed: %.1fms pre-process, %.1fms inference, %.1fms NMS, %.1fms strong sort update per image at shape {(1, 3, *imgsz)}'
             % t)
         if self.save_txt or save_vid:
-            s = f"\n{len(list(self.save_dir.glob('tracks/*.txt')))} tracks saved to {save_dir / 'tracks'}" if save_txt else ''
+            s = f"\n{len(list(self.save_dir.glob('tracks/*.txt')))} tracks saved to {self.save_dir / 'tracks'}" if self.save_txt else ''
             LOGGER.info(
                 f"Results saved to {colorstr('bold', self.save_dir)}{s}")
         if update:
