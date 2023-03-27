@@ -65,7 +65,6 @@ class Analysis(object):
     """docstring for Analysis."""
 
     def __init__(self,
-                 source,
                  yolo_weights=WEIGHTS / 'yolov5m.pt',
                  strong_sort_weights=WEIGHTS / 'osnet_x0_25_msmt17.pt',
                  save_txt=False,
@@ -81,6 +80,8 @@ class Analysis(object):
         config_strongsort = ROOT / 'strong_sort/configs/strong_sort.yaml'
         device = ''
         project = ROOT / 'runs/track'
+
+        eval = False
 
         # Directories
         if not isinstance(yolo_weights, list):  # single yolo model
@@ -102,7 +103,7 @@ class Analysis(object):
         else:
             self.device = select_device(device)
         self.model = DetectMultiBackend(yolo_weights,
-                                        device=device,
+                                        device=self.device,
                                         dnn=dnn,
                                         data=None,
                                         fp16=self.half)
@@ -130,14 +131,13 @@ class Analysis(object):
         #                 ema_alpha=cfg.STRONGSORT.EMA_ALPHA,
         #             ))
         #         strongsort_list[i].model.warmup()
-    def test_analysis_image(self, source='0', imgsz=(640, 640)):
+    def test_analysis_image(self, source='0', show_team='', imgsz=(640, 640)):
         agnostic_nms = False
         classes = None
         conf_thres = 0.25  # confidence threshold
         iou_thres = 0.45
         nosave = False
         show_perstrans = True
-        show_team = True
         save_crop = True
         max_det = 1000
         show_vid = False
@@ -146,6 +146,7 @@ class Analysis(object):
         hide_labels = False
         hide_conf = False
         hide_class = False
+        visualize = False
 
         nr_sources = 1
         outputs = [None] * nr_sources

@@ -12,7 +12,7 @@
 # here put the import lib
 import datetime
 from event_data.get_eventdata import Get_Eventdata, Get_Videodata
-from demo_test import run
+from demo_test import run, Analysis
 import cv2
 import os
 from pathlib import Path
@@ -33,6 +33,9 @@ if __name__ == "__main__":
     print(len(test_list[0]))
     print(test_list[0])
 
+    weight_path = Path('datasets/best.pt')
+    model = Analysis(weight_path)
+
     # save screen shot
     for index, event in enumerate(test_list):
         time_shot = event[1]
@@ -40,15 +43,8 @@ if __name__ == "__main__":
         jpg_name = 'runs/temp/testing_temp_' + str(index) + '.jpg'
         cv2.imwrite(jpg_name, out)
         source = jpg_name
-        weight_path = Path('datasets/best.pt')
-        im0, seg_map, model_image, retrieved_image = run(
-            source=source,
-            yolo_weights=weight_path,
-            show_team=info_path,
-            no_strongSort=True,
-            show_perstrans=True,
-            save_vid=True,
-            save_crop=True)
+        im0, seg_map, model_image, retrieved_image = model.test_analysis_image(
+            source, show_team=info_path)
 
         if not os.path.exists('runs/save/' + str(index)):
             os.makedirs('runs/save/' + str(index))
