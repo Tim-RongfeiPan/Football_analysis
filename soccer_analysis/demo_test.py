@@ -67,8 +67,7 @@ class Analysis(object):
     def __init__(self,
                  yolo_weights=WEIGHTS / 'yolov5m.pt',
                  strong_sort_weights=WEIGHTS / 'osnet_x0_25_msmt17.pt',
-                 save_txt=False,
-                 no_strongSort=False):
+                 save_txt=False):
         super(Analysis, self).__init__()
         self.save_txt = save_txt
         self.yolo_weights = yolo_weights
@@ -77,7 +76,6 @@ class Analysis(object):
         dnn = False
         exist_ok = False
         name = 'exp'
-        config_strongsort = ROOT / 'strong_sort/configs/strong_sort.yaml'
         device = ''
         project = ROOT / 'runs/track'
 
@@ -109,40 +107,13 @@ class Analysis(object):
                                         fp16=self.half)
         self.stride, self.names, self.pt = self.model.stride, self.model.names, self.model.pt
 
-        # if not no_strongSort:
-        #     # initialize StrongSORT
-        #     cfg = get_config()
-        #     cfg.merge_from_file(config_strongsort)
-
-        #     # Create as many strong sort instances as there are video sources
-        #     strongsort_list = []
-        #     for i in range(nr_sources):
-        #         strongsort_list.append(
-        #             StrongSORT(
-        #                 strong_sort_weights,
-        #                 device,
-        #                 half,
-        #                 max_dist=cfg.STRONGSORT.MAX_DIST,
-        #                 max_iou_distance=cfg.STRONGSORT.MAX_IOU_DISTANCE,
-        #                 max_age=cfg.STRONGSORT.MAX_AGE,
-        #                 n_init=cfg.STRONGSORT.N_INIT,
-        #                 nn_budget=cfg.STRONGSORT.NN_BUDGET,
-        #                 mc_lambda=cfg.STRONGSORT.MC_LAMBDA,
-        #                 ema_alpha=cfg.STRONGSORT.EMA_ALPHA,
-        #             ))
-        #         strongsort_list[i].model.warmup()
     def test_analysis_image(self, source='0', show_team='', imgsz=(640, 640)):
         agnostic_nms = False
         classes = None
         conf_thres = 0.25  # confidence threshold
         iou_thres = 0.45
-        nosave = False
         show_perstrans = True
-        save_crop = True
         max_det = 1000
-        show_vid = False
-        save_vid = False
-        update = False
         hide_labels = False
         hide_conf = False
         hide_class = False
@@ -159,8 +130,6 @@ class Analysis(object):
 
         source = str(source)
 
-        save_img = not nosave and not source.endswith(
-            '.txt')  # save inference images
         is_file = Path(source).suffix[1:] in (VID_FORMATS)
         is_url = source.lower().startswith(
             ('rtsp://', 'rtmp://', 'http://', 'https://'))
@@ -214,35 +183,15 @@ class Analysis(object):
                     p, im0, _ = path[i], im0s[i].copy(), dataset.count
                     p = Path(p)  # to Path
                     s += f'{i}: '
-                    txt_file_name = p.name
-                    save_path = str(self.save_dir /
-                                    p.name)  # im.jpg, vid.mp4, ...
                 else:
                     p, im0, _ = path, im0s.copy(), getattr(dataset, 'frame', 0)
                     p = Path(p)  # to Path
-                    # video file
-                    if source.endswith(VID_FORMATS):
-                        txt_file_name = p.stem
-                        save_path = str(self.save_dir /
-                                        p.name)  # im.jpg, vid.mp4, ...
-                    # folder with imgs
-                    else:
-                        txt_file_name = p.parent.name  # get folder name containing current img
-                        # im.jpg, vid.mp4, ...
-                        save_path = str(self.save_dir / p.parent.name)
                 curr_frames[i] = im0
 
-                txt_path = str(self.save_dir / 'tracks' /
-                               txt_file_name)  # im.txt
                 s += '%gx%g ' % im.shape[2:]  # print string
-                imc = im0.copy() if save_crop else im0  # for save_crop
+                imc = im0.copy()
 
                 annotator = Annotator(im0, line_width=2, pil=not ascii)
-                # if not no_strongSort:
-                #     if cfg.STRONGSORT.ECC:  # camera motion compensation
-                #         # 21.6%
-                #         strongsort_list[i].tracker.camera_update(
-                #             prev_frames[i], curr_frames[i])
                 if det is not None and len(det):
                     # Rescale boxes from img_size to im0 size
                     det[:, :4] = scale_coords(im.shape[2:], det[:, :4],
@@ -259,11 +208,6 @@ class Analysis(object):
 
                     # pass detections to strongsort
                     t4 = time_sync()
-                    # 48.1%
-                    # if not no_strongSort:
-                    #     outputs[i] = strongsort_list[i].update(
-                    #         xywhs.cpu(), confs.cpu(), clss.cpu(), im0)
-                    # else:
                     newdet = []
                     for ii, detects in enumerate(det):
                         newele = []
@@ -305,132 +249,42 @@ class Analysis(object):
                                 out = (int(out[0]), int(out[1]))
                                 pers_point.append(out)
 
-                            if self.save_txt:
-                                # to MOT format
-                                bbox_left = output[0]
-                                bbox_top = output[1]
-                                bbox_w = output[2] - output[0]
-                                bbox_h = output[3] - output[1]
-                                # Write MOT compliant results to file
-                                with open(txt_path + '.txt', 'a') as f:
-                                    f.write(('%g ' * 10 + '\n') % (
-                                        frame_idx + 1,
-                                        id,
-                                        bbox_left,  # MOT format
-                                        bbox_top,
-                                        bbox_w,
-                                        bbox_h,
-                                        -1,
-                                        -1,
-                                        -1,
-                                        i))
+                            if show_team:
+                                crop = save_one_box(bboxes,
+                                                    imc,
+                                                    save=False,
+                                                    BGR=True)
+                                infoFile = show_team
+                                colorName = team_assignment(crop, infoFile)
+                            c = int(cls)  # integer class
+                            id = int(id)  # integer id
+                            if show_team:
+                                label = None if hide_labels else (
+                                    f'{id} {self.names[c]} {colorName}'
+                                    if hide_conf else
+                                    (f'{id} {conf:.2f} {colorName}'
+                                     if hide_class else
+                                     f'{id} {self.names[c]} {conf:.2f} {colorName}'
+                                     ))
+                            else:
+                                label = None if hide_labels else (
+                                    f'{id} {self.names[c]}' if hide_conf else
+                                    (f'{id} {conf:.2f}' if hide_class else
+                                     f'{id} {self.names[c]} {conf:.2f}'))
 
-                            if save_vid or save_crop or show_vid:  # Add bbox to image
+                            annotator.box_label(bboxes,
+                                                label,
+                                                color=colors(c, True))
 
-                                if show_team:
-                                    crop = save_one_box(bboxes,
-                                                        imc,
-                                                        save=False,
-                                                        BGR=True)
-                                    ########################################
-                                    infoFile = show_team
-                                    colorName = team_assignment(crop, infoFile)
-                                    #########################################
-                                c = int(cls)  # integer class
-                                id = int(id)  # integer id
-                                if show_team:
-                                    label = None if hide_labels else (
-                                        f'{id} {self.names[c]} {colorName}'
-                                        if hide_conf else
-                                        (f'{id} {conf:.2f} {colorName}'
-                                         if hide_class else
-                                         f'{id} {self.names[c]} {conf:.2f} {colorName}'
-                                         ))
-                                else:
-                                    label = None if hide_labels else (
-                                        f'{id} {self.names[c]}'
-                                        if hide_conf else
-                                        (f'{id} {conf:.2f}' if hide_class else
-                                         f'{id} {self.names[c]} {conf:.2f}'))
-
-                                annotator.box_label(bboxes,
-                                                    label,
-                                                    color=colors(c, True))
-
-                                if save_crop:
-                                    txt_file_name = txt_file_name if (
-                                        isinstance(path, list)
-                                        and len(path) > 1) else ''
-                                    save_one_box(bboxes,
-                                                 imc,
-                                                 file=self.save_dir / 'crops' /
-                                                 txt_file_name /
-                                                 self.names[c] / f'{id}' /
-                                                 f'{p.stem}.jpg',
-                                                 BGR=True)
                         if show_perstrans:
                             im_out = cv2.resize(im_out, (1280, 720))
-                            # cv2.imwrite('runs/save/test_imc.jpg', imc)
-                            # cv2.imwrite('runs/save/test_im0.jpg', im0)
-                            # cv2.imwrite('runs/save/test_retrieved_image.jpg',
-                            #             retrieved_image)
-                            # cv2.imwrite('runs/save/test_seg_map.jpg', seg_map)
                             model_image = cv2.imread('pers_trans/model.jpg')
                             model_image = cv2.resize(model_image, (115, 74))
                             for point in pers_point:
                                 cv2.circle(model_image, point, 1, (0, 0, 255),
                                            -1)
                             model_image = cv2.resize(model_image, (1280, 720))
-                            # cv2.imwrite('runs/save/test_model_image.jpg',
-                            #             model_image)
                             return im0, seg_map, model_image, retrieved_image
-                    LOGGER.info(
-                        f'{s}Done. YOLO:({t3 - t2:.3f}s), StrongSORT:({t5 - t4:.3f}s)'
-                    )
-                # else:
-                #     strongsort_list[i].increment_ages()
-                #     LOGGER.info('No detections')
-
-                # Stream results
-                im0 = annotator.result()
-                if show_vid:
-                    cv2.imshow(str(p), im0)
-                    cv2.waitKey(1)  # 1 millisecond
-
-                # Save results (image with detections)
-                if save_vid:
-                    if vid_path[i] != save_path:  # new video
-                        vid_path[i] = save_path
-                        if isinstance(vid_writer[i], cv2.VideoWriter):
-                            # release previous video writer
-                            vid_writer[i].release()
-                        if vid_cap:  # video
-                            fps = vid_cap.get(cv2.CAP_PROP_FPS)
-                            w = int(vid_cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-                            h = int(vid_cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-                        else:  # stream
-                            fps, w, h = 30, im0.shape[1], im0.shape[0]
-                        # force *.mp4 suffix on results videos
-                        save_path = str(Path(save_path).with_suffix('.mp4'))
-                        vid_writer[i] = cv2.VideoWriter(
-                            save_path, cv2.VideoWriter_fourcc(*'mp4v'), fps,
-                            (w, h))
-                    vid_writer[i].write(im0)
-
-                prev_frames[i] = curr_frames[i]
-
-        # Print results
-        t = tuple(x / seen * 1E3 for x in dt)  # speeds per image
-        LOGGER.info(
-            f'Speed: %.1fms pre-process, %.1fms inference, %.1fms NMS, %.1fms strong sort update per image at shape {(1, 3, *imgsz)}'
-            % t)
-        if self.save_txt or save_vid:
-            s = f"\n{len(list(self.save_dir.glob('tracks/*.txt')))} tracks saved to {self.save_dir / 'tracks'}" if self.save_txt else ''
-            LOGGER.info(
-                f"Results saved to {colorstr('bold', self.save_dir)}{s}")
-        if update:
-            # update model (to fix SourceChangeWarning)
-            strip_optimizer(self.yolo_weights)
 
 
 @torch.no_grad()
@@ -671,26 +525,6 @@ def run(
                                 imc, pos)
                             out = (int(out[0]), int(out[1]))
                             pers_point.append(out)
-
-                        if save_txt:
-                            # to MOT format
-                            bbox_left = output[0]
-                            bbox_top = output[1]
-                            bbox_w = output[2] - output[0]
-                            bbox_h = output[3] - output[1]
-                            # Write MOT compliant results to file
-                            with open(txt_path + '.txt', 'a') as f:
-                                f.write(('%g ' * 10 + '\n') % (
-                                    frame_idx + 1,
-                                    id,
-                                    bbox_left,  # MOT format
-                                    bbox_top,
-                                    bbox_w,
-                                    bbox_h,
-                                    -1,
-                                    -1,
-                                    -1,
-                                    i))
 
                         if save_vid or save_crop or show_vid:  # Add bbox to image
 

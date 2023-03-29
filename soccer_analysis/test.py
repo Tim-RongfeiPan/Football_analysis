@@ -12,7 +12,7 @@
 # here put the import lib
 import datetime
 from event_data.get_eventdata import Get_Eventdata, Get_Videodata
-from demo_test import run, Analysis
+from demo_test import Analysis
 import cv2
 import os
 from pathlib import Path
@@ -29,9 +29,6 @@ if __name__ == "__main__":
     video = Get_Videodata(video_path, time_offset)
 
     test_list = xlsx.get_eventdata_byevent(test_type)
-    print(len(test_list))
-    print(len(test_list[0]))
-    print(test_list[0])
 
     weight_path = Path('datasets/best.pt')
     model = Analysis(weight_path)
@@ -39,6 +36,7 @@ if __name__ == "__main__":
     # save screen shot
     for index, event in enumerate(test_list):
         time_shot = event[1]
+        pos_shot = event[8]
         out = video.get_videodata_bytime(5, time_shot)
         jpg_name = 'runs/temp/testing_temp_' + str(index) + '.jpg'
         cv2.imwrite(jpg_name, out)
