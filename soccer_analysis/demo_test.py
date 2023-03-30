@@ -237,7 +237,15 @@ class Analysis(object):
                             id = output[4]
                             cls = output[5]
 
-                            if show_perstrans:
+                            if show_team:
+                                crop = save_one_box(bboxes,
+                                                    imc,
+                                                    save=False,
+                                                    BGR=True)
+                                infoFile = show_team
+                                colorName = team_assignment(crop, infoFile)
+
+                            if show_team and show_perstrans:
                                 posx = int((bboxes[0] + bboxes[2]) / 2)
                                 posy = int(bboxes[3])
                                 pos = [
@@ -246,16 +254,9 @@ class Analysis(object):
                                 ]
                                 retrieved_image, seg_map, im_out, out = perstrans(
                                     imc, pos)
-                                out = (int(out[0]), int(out[1]))
+                                out = (int(out[0]), int(out[1]), colorName)
                                 pers_point.append(out)
 
-                            if show_team:
-                                crop = save_one_box(bboxes,
-                                                    imc,
-                                                    save=False,
-                                                    BGR=True)
-                                infoFile = show_team
-                                colorName = team_assignment(crop, infoFile)
                             c = int(cls)  # integer class
                             id = int(id)  # integer id
                             if show_team:
@@ -280,11 +281,15 @@ class Analysis(object):
                             im_out = cv2.resize(im_out, (1280, 720))
                             model_image = cv2.imread('pers_trans/model.jpg')
                             model_image = cv2.resize(model_image, (115, 74))
-                            for point in pers_point:
-                                cv2.circle(model_image, point, 1, (0, 0, 255),
-                                           -1)
+                            for index, (po1, po2,
+                                        colorName) in enumerate(pers_point):
+                                cv2.circle(model_image, (po1, po2), 1,
+                                           (0, 0, 255), -1)
+                                pers_point[index] = (int(po1 * 1280 / 115),
+                                                     int(po2 * 720 / 74),
+                                                     colorName)
                             model_image = cv2.resize(model_image, (1280, 720))
-                            return im0, seg_map, model_image, retrieved_image
+                            return im0, seg_map, model_image, retrieved_image, pers_point
 
 
 @torch.no_grad()

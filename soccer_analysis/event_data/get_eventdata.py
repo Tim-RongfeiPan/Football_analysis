@@ -11,7 +11,6 @@
 
 # here put the import lib
 
-from matplotlib.pyplot import step
 from openpyxl import *
 import datetime
 import cv2
@@ -175,6 +174,16 @@ class Get_Videodata:
         #     else:
         #         print('errors occured')
         return frame
+
+
+class Get_xGdata(object):
+    """docstring for Get_xGdata."""
+
+    def __init__(self):
+        super(Get_xGdata, self).__init__()
+
+    def get_jsondata_byevent(self):
+        pass
 
 
 if __name__ == '__main__':

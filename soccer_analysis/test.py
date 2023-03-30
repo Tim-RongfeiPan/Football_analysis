@@ -17,6 +17,8 @@ import cv2
 import os
 from pathlib import Path
 
+from loguru import logger
+
 if __name__ == "__main__":
     video_path = 'datasets/test//ifsylvia-tabyfk.mp4'
     event_path = 'datasets/test/IF Sylvia - Täby FK (1-2).xlsx'
@@ -41,15 +43,26 @@ if __name__ == "__main__":
         jpg_name = 'runs/temp/testing_temp_' + str(index) + '.jpg'
         cv2.imwrite(jpg_name, out)
         source = jpg_name
-        im0, seg_map, model_image, retrieved_image = model.test_analysis_image(
+        im0, seg_map, model_image, retrieved_image, pers_point = model.test_analysis_image(
             source, show_team=info_path)
 
-        if not os.path.exists('runs/save/' + str(index)):
-            os.makedirs('runs/save/' + str(index))
+        pos_shot = pos_shot.split(';')
 
-        cv2.imwrite('runs/save/' + str(index) + '/test_im0.jpg', im0)
-        cv2.imwrite('runs/save/' + str(index) + '/test_retrieved_image.jpg',
-                    retrieved_image)
-        cv2.imwrite('runs/save/' + str(index) + '/test_seg_map.jpg', seg_map)
-        cv2.imwrite('runs/save/' + str(index) + '/test_model_image.jpg',
-                    model_image)
+        pos_shot = [int(pos_shot[0]), int(pos_shot[1])]
+        pos_shot = [
+            int(pos_shot[0] * 1280 / 100),
+            int(pos_shot[1] * 720 / 100)
+        ]
+
+        logger.info(pos_shot)
+        logger.info(pers_point)
+
+        # if not os.path.exists('runs/save/' + str(index)):
+        #     os.makedirs('runs/save/' + str(index))
+
+        # cv2.imwrite('runs/save/' + str(index) + '/test_im0.jpg', im0)
+        # cv2.imwrite('runs/save/' + str(index) + '/test_retrieved_image.jpg',
+        #             retrieved_image)
+        # cv2.imwrite('runs/save/' + str(index) + '/test_seg_map.jpg', seg_map)
+        # cv2.imwrite('runs/save/' + str(index) + '/test_model_image.jpg',
+        #             model_image)
