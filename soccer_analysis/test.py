@@ -11,11 +11,12 @@
 
 # here put the import lib
 import datetime
-from event_data.get_eventdata import Get_Eventdata, Get_Videodata
+from eventdata.get_eventdata import Get_Eventdata, Get_Videodata, Get_xGdata
 from demo_test import Analysis
 import cv2
 import os
 from pathlib import Path
+from eventdata.cal_xg import *
 
 from loguru import logger
 
@@ -39,14 +40,19 @@ if __name__ == "__main__":
     for index, event in enumerate(test_list):
         time_shot = event[1]
         pos_shot = event[8]
-        out = video.get_videodata_bytime(5, time_shot)
-        jpg_name = 'runs/temp/testing_temp_' + str(index) + '.jpg'
-        cv2.imwrite(jpg_name, out)
-        source = jpg_name
-        im0, seg_map, model_image, retrieved_image, pers_point = model.test_analysis_image(
-            source, show_team=info_path)
+        # out = video.get_videodata_bytime(5, time_shot)
+        # jpg_name = 'runs/temp/testing_temp_' + str(index) + '.jpg'
+        # cv2.imwrite(jpg_name, out)
+        # source = jpg_name
+        # im0, seg_map, model_image, retrieved_image, pers_point = model.test_analysis_image(
+        #     source, show_team=info_path)
 
         pos_shot = pos_shot.split(';')
+        pers_point = [(990, 184, 'Blue'), (723, 194, 'Blue'),
+                      (667, 233, 'Blue'), (133, 651, 'Blue'),
+                      (578, 68, 'Blue'), (823, 68, 'Blue'), (812, 58, 'Blue'),
+                      (890, 9, 'White'), (812, 0, 'Blue'), (790, -19, 'Blue'),
+                      (378, 19, 'White'), (734, 0, 'Blue'), (467, 9, 'Blue')]
 
         pos_shot = [int(pos_shot[0]), int(pos_shot[1])]
         pos_shot = [
@@ -55,7 +61,14 @@ if __name__ == "__main__":
         ]
 
         logger.info(pos_shot)
-        logger.info(pers_point)
+        # logger.info(pers_point)
+
+        num = cal_numdef_around(pos_shot, pers_point, threshold=400)
+        #TODO: method to handle goal position
+        goal_pos = [[1280, 330], [1280, 390]]
+        num1 = cal_numdef_2goal(pos_shot, pers_point, goal_pos)
+        logger.info(num)
+        logger.info(num1)
 
         # if not os.path.exists('runs/save/' + str(index)):
         #     os.makedirs('runs/save/' + str(index))

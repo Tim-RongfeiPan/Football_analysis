@@ -11,9 +11,12 @@
 
 # here put the import lib
 
-from openpyxl import *
+from openpyxl import load_workbook
 import datetime
 import cv2
+import json
+
+from loguru import logger
 
 
 class Get_Eventdata:
@@ -177,17 +180,36 @@ class Get_Videodata:
 
 
 class Get_xGdata(object):
-    """docstring for Get_xGdata."""
+    """docstring for Get_xGdata in json file."""
 
-    def __init__(self):
+    def __init__(self, filename=''):
+        """init get_xGdata
+
+        Args:
+            filename (str, optional): json file name with match data. Defaults to ''.
+        """
         super(Get_xGdata, self).__init__()
+        with open(filename) as f:
+            self.data = json.load(f)
 
-    def get_jsondata_byevent(self):
-        pass
+    def get_jsondata_shot(self):
+        """get shot data in json file
+
+        Returns:
+            list: list of dict with shot event data
+        """
+
+        event_list = self.data['events']
+        shot_list = []
+        for i, event in enumerate(event_list):
+            ac = event['action']
+            if ac.find('shot') != -1 or ac.find('Shot') != -1:
+                if ac.find('keeper') == -1 and ac.find('save') == -1:
+                    shot_list.append(event)
+        return shot_list
 
 
 if __name__ == '__main__':
-    pass
     # path = 'datasets/IK Frej Täby-IF Brommapojkarna(0-1).xlsx'
     # xlsx = Get_Eventdata(path)
     # name = 'Shots'
@@ -198,8 +220,12 @@ if __name__ == '__main__':
     # print(out)
     # print('=============')
     # print(out[0])
-    path = 'datasets/ettan_test.mp4'
-    dtime = datetime.time(0, 0, 46)
-    vi = Get_Videodata(path, 0)
-    out = vi.get_videodata_bytime(2, dtime)
-    # print(len(out))
+    # path = 'datasets/ettan_test.mp4'
+    # dtime = datetime.time(0, 0, 46)
+    # vi = Get_Videodata(path, 0)
+    # out = vi.get_videodata_bytime(2, dtime)
+
+    jsonfile = 'datasets/test2/ettan, 2021786157109941299-AssyriskaFF-TäbyFK.json'
+    xgdata = Get_xGdata(jsonfile)
+    shot_list = xgdata.get_jsondata_shot()
+    logger.info(shot_list[0])
