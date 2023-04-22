@@ -21,16 +21,17 @@ from eventdata.cal_xg import *
 from loguru import logger
 
 if __name__ == "__main__":
-    video_path = 'datasets/test//ifsylvia-tabyfk.mp4'
-    event_path = 'datasets/test/IF Sylvia - Täby FK (1-2).xlsx'
-    info_path = 'datasets/test/IF Sylvia - Täby FK.txt'
-
-    time_shot = datetime.time(0, 45, 55)
+    video_path = 'datasets/test2/assyriska-taby.mp4'
+    event_path = 'datasets/test2/Assyriska FF - Täby FK (2-7).xlsx'
+    info_path = 'datasets/test2/Assyriska FF - Täby FK.txt'
+    json_path = 'datasets/test2/ettan, 2021786157109941299-AssyriskaFF-TäbyFK.json'
     test_type = 'Shots'
     time_offset = 0.65
     xlsx = Get_Eventdata(event_path)
     video = Get_Videodata(video_path, time_offset)
+    xgdata = Get_xGdata(json_path)
 
+    shot_list = xgdata.get_jsondata_shot()
     test_list = xlsx.get_eventdata_byevent(test_type)
 
     weight_path = Path('datasets/best.pt')
@@ -38,44 +39,75 @@ if __name__ == "__main__":
 
     # save screen shot
     for index, event in enumerate(test_list):
+        print('=============================================')
+        # logger.info(event)
         time_shot = event[1]
+        team_name = event[7]
         pos_shot = event[8]
-        # out = video.get_videodata_bytime(5, time_shot)
-        # jpg_name = 'runs/temp/testing_temp_' + str(index) + '.jpg'
-        # cv2.imwrite(jpg_name, out)
-        # source = jpg_name
-        # im0, seg_map, model_image, retrieved_image, pers_point = model.test_analysis_image(
-        #     source, show_team=info_path)
+        out = video.get_videodata_bytime(5, time_shot)
+        jpg_name = 'runs/temp/testing_temp_' + str(index) + '.jpg'
+        cv2.imwrite(jpg_name, out)
+        source = jpg_name
+        im0, seg_map, model_image, retrieved_image, pers_point = model.test_analysis_image(
+            source, show_team=info_path)
 
         pos_shot = pos_shot.split(';')
-        pers_point = [(990, 184, 'Blue'), (723, 194, 'Blue'),
-                      (667, 233, 'Blue'), (133, 651, 'Blue'),
-                      (578, 68, 'Blue'), (823, 68, 'Blue'), (812, 58, 'Blue'),
-                      (890, 9, 'White'), (812, 0, 'Blue'), (790, -19, 'Blue'),
-                      (378, 19, 'White'), (734, 0, 'Blue'), (467, 9, 'Blue')]
+
+        # pers_point = [(1291, 0, 'Blue'), (1313, 48, 'White'),
+        #               (1224, -155, 'Blue'), (1280, 116, 'Blue'),
+        #               (1246, -175, 'Blue'), (1280, 58, 'White'),
+        #               (1369, -145, 'White'), (1380, 0, 'Blue'),
+        #               (1335, -9, 'White'), (1346, -145, 'White'),
+        #               (1324, -58, 'White'), (1280, -58, 'White'),
+        #               (1324, 38, 'Blue'), (1291, -126, 'Blue'),
+        #               (1324, -136, 'Blue'), (1313, -145, 'White'),
+        #               (1435, 9, 'White'), (1469, -262, 'Blue'),
+        #               (1747, -992, 'White')]
 
         pos_shot = [int(pos_shot[0]), int(pos_shot[1])]
         pos_shot = [
-            int(pos_shot[0] * 1280 / 100),
-            int(pos_shot[1] * 720 / 100)
+            int(pos_shot[0] * 1920 / 100),
+            int(pos_shot[1] * 1080 / 100)
         ]
 
-        logger.info(pos_shot)
+        # logger.info(pos_shot)
         # logger.info(pers_point)
 
-        num = cal_numdef_around(pos_shot, pers_point, threshold=400)
         #TODO: method to handle goal position
-        goal_pos = [[1280, 330], [1280, 390]]
+
+        direction = xlsx.get_direction_byteam(time_shot, team_name)
+        print(direction, team_name)
+        goal_pos1 = [[1280, 330], [1280, 390]]
+        goal_mid1 = [1280, 360]
+        goal_pos2 = [[0, 330], [0, 390]]
+        goal_mid2 = [0, 360]
+
+        if direction == 'left':
+            goal_mid = goal_mid2
+            goal_pos = goal_pos2
+        else:
+            goal_mid = goal_mid1
+            goal_pos = goal_pos1
+
+        num = cal_numdef_around(pos_shot, pers_point, threshold=400)
         num1 = cal_numdef_2goal(pos_shot, pers_point, goal_pos)
+        dis = cal_eurdistance(goal_mid, pos_shot)
+        # logger.info(dis)
+        xg = cal_xg(dis, num, num1, header=0)
         logger.info(num)
         logger.info(num1)
+        logger.info(xg)
 
-        # if not os.path.exists('runs/save/' + str(index)):
-        #     os.makedirs('runs/save/' + str(index))
+        real_xg = shot_list[index]['xg']
+        logger.info(real_xg)
+        print('=============================================')
 
-        # cv2.imwrite('runs/save/' + str(index) + '/test_im0.jpg', im0)
-        # cv2.imwrite('runs/save/' + str(index) + '/test_retrieved_image.jpg',
-        #             retrieved_image)
-        # cv2.imwrite('runs/save/' + str(index) + '/test_seg_map.jpg', seg_map)
-        # cv2.imwrite('runs/save/' + str(index) + '/test_model_image.jpg',
-        #             model_image)
+        if not os.path.exists('runs/save/' + str(index)):
+            os.makedirs('runs/save/' + str(index))
+
+        cv2.imwrite('runs/save/' + str(index) + '/test_im0.jpg', im0)
+        cv2.imwrite('runs/save/' + str(index) + '/test_retrieved_image.jpg',
+                    retrieved_image)
+        cv2.imwrite('runs/save/' + str(index) + '/test_seg_map.jpg', seg_map)
+        cv2.imwrite('runs/save/' + str(index) + '/test_model_image.jpg',
+                    model_image)

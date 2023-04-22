@@ -32,6 +32,40 @@ class Get_Eventdata:
         self.wb = load_workbook(path)
         self.data = self.wb['Sheet1']
 
+    def get_teamname(self):
+        team_list = []
+        i = 0
+        while True:
+            d = self.getdata_byaxis(2 + i, 8)
+            if i == 0:
+                team_list.append(d)
+            else:
+                if team_list[0] == d:
+                    pass
+                else:
+                    team_list.append(d)
+                    return team_list
+            i += 1
+
+    def get_initdirection(self):
+        init_team = self.getdata_byaxis(2, 8)
+        field_pos = self.getdata_byaxis(2, 9)  #9,12
+        receiver_pos = self.getdata_byaxis(2, 12)
+        field_pos = field_pos.split(';')
+        receiver_pos = receiver_pos.split(';')
+        for i, pos in enumerate(field_pos):
+            field_pos[i] = int(pos)
+        for i, pos in enumerate(receiver_pos):
+            receiver_pos[i] = int(pos)
+        if receiver_pos[0] > field_pos[0]:
+            return (init_team, 'left')
+        else:
+            return (init_team, 'right')
+
+    def getdata_byaxis(self, x, y):
+        d = self.data.cell(x, y)
+        return d.value
+
     def get_eventdata_byevent(self, name):
         """get event data by event
 
@@ -129,6 +163,34 @@ class Get_Eventdata:
                 pos_list.append(pos_info)
         return pos_list
 
+    def get_startime(self):
+        starttime = self.getdata_byaxis(2, 2)
+        return starttime
+
+    def get_direction_byteam(self, time, team_name):
+        s = self.get_initdirection()
+        t = self.get_startime()
+        if datetime.datetime.combine(
+                datetime.date.min, time) - datetime.datetime.combine(
+                    datetime.date.min, t) >= datetime.timedelta(minutes=53):
+            #second half
+            if team_name == s[0]:
+                if s[1] == 'left':
+                    return 'right'
+                else:
+                    return 'left'
+            else:
+                return s[1]
+        else:
+            #first half
+            if team_name == s[0]:
+                return s[1]
+            else:
+                if s[1] == 'left':
+                    return 'right'
+                else:
+                    return 'left'
+
 
 class Get_Videodata:
     """Get_Videodata."""
@@ -203,29 +265,28 @@ class Get_xGdata(object):
         shot_list = []
         for i, event in enumerate(event_list):
             ac = event['action']
-            if ac.find('shot') != -1 or ac.find('Shot') != -1:
-                if ac.find('keeper') == -1 and ac.find('save') == -1:
-                    shot_list.append(event)
+            if ac == 'Shot':
+                shot_list.append(event)
         return shot_list
 
 
 if __name__ == '__main__':
-    # path = 'datasets/IK Frej Täby-IF Brommapojkarna(0-1).xlsx'
-    # xlsx = Get_Eventdata(path)
-    # name = 'Shots'
-    # # dtime = datetime.time(0, 8, 29)
-    # # name = 'Christer Gustafsson'
-    # # name = 'IF Brommapojkarna'
-    # out = xlsx.get_position_byevent(name)
-    # print(out)
-    # print('=============')
+    path = 'datasets/test2/Assyriska FF - Täby FK (2-7).xlsx'
+    xlsx = Get_Eventdata(path)
+    name = 'Shots'
+    # dtime = datetime.time(0, 8, 29)
+    # name = 'Christer Gustafsson'
+    # name = 'IF Brommapojkarna'
+    out = xlsx.get_startime()
+    print(out, type(out))
+    print('=============')
     # print(out[0])
     # path = 'datasets/ettan_test.mp4'
     # dtime = datetime.time(0, 0, 46)
     # vi = Get_Videodata(path, 0)
     # out = vi.get_videodata_bytime(2, dtime)
 
-    jsonfile = 'datasets/test2/ettan, 2021786157109941299-AssyriskaFF-TäbyFK.json'
-    xgdata = Get_xGdata(jsonfile)
-    shot_list = xgdata.get_jsondata_shot()
-    logger.info(shot_list[0])
+    # jsonfile = 'datasets/test2/ettan, 2021786157109941299-AssyriskaFF-TäbyFK.json'
+    # xgdata = Get_xGdata(jsonfile)
+    # shot_list = xgdata.get_jsondata_shot()
+    # logger.info(shot_list[0])

@@ -46,7 +46,7 @@ def cal_numdef_2goal(pos, poslist, goal_pos):
 
 
 def cal_xg(dis, num_ar, num_goal, header=0):
-    xg = (100 - dis) / 100 - num_ar / 7 - num_goal / 7
+    xg = (1900 - dis) / 1900 - num_ar / 30 - num_goal / 50
     xg = xg / 100 + (1 - header) * 99 * xg / 100
     return xg
 
