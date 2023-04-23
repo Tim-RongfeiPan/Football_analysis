@@ -191,6 +191,18 @@ class Get_Eventdata:
                 else:
                     return 'left'
 
+    def get_half(self, time):
+        s = self.get_initdirection()
+        t = self.get_startime()
+        if datetime.datetime.combine(
+                datetime.date.min, time) - datetime.datetime.combine(
+                    datetime.date.min, t) >= datetime.timedelta(minutes=53):
+            #second half
+            return 'second half'
+        else:
+            #first half
+            return 'first half'
+
 
 class Get_Videodata:
     """Get_Videodata."""
@@ -226,18 +238,6 @@ class Get_Videodata:
         # t2 = int(time[1] + self.time_offset)
         self.video.set(cv2.CAP_PROP_POS_FRAMES, int(t1))
         j, frame = self.video.read()
-        # cv2.imshow('sd', frame)
-        # cv2.waitKey()
-        # while self.video.isOpened():
-        #     j, frame = self.video.read()
-        #     if j:
-        #         i += 1
-        #         if i >= t1 and i <= t2:
-        #             out.append(frame)
-        #         elif i > t2:
-        #             return out
-        #     else:
-        #         print('errors occured')
         return frame
 
 

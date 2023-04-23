@@ -249,8 +249,8 @@ class Analysis(object):
                                 posx = int((bboxes[0] + bboxes[2]) / 2)
                                 posy = int(bboxes[3])
                                 pos = [
-                                    int(posx * 1280 / 1920),
-                                    int(posy * 720 / 1080), 1
+                                    int(posx * 1280 / 1280),
+                                    int(posy * 720 / 720), 1
                                 ]
                                 retrieved_image, seg_map, im_out, out = perstrans(
                                     imc, pos)

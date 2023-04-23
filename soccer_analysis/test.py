@@ -26,7 +26,7 @@ if __name__ == "__main__":
     info_path = 'datasets/test2/Assyriska FF - Täby FK.txt'
     json_path = 'datasets/test2/ettan, 2021786157109941299-AssyriskaFF-TäbyFK.json'
     test_type = 'Shots'
-    time_offset = 0.65
+    time_offset = 4.8
     xlsx = Get_Eventdata(event_path)
     video = Get_Videodata(video_path, time_offset)
     xgdata = Get_xGdata(json_path)
@@ -66,8 +66,8 @@ if __name__ == "__main__":
 
         pos_shot = [int(pos_shot[0]), int(pos_shot[1])]
         pos_shot = [
-            int(pos_shot[0] * 1920 / 100),
-            int(pos_shot[1] * 1080 / 100)
+            int(pos_shot[0] * 1280 / 100),
+            int(pos_shot[1] * 720 / 100)
         ]
 
         # logger.info(pos_shot)
@@ -76,10 +76,16 @@ if __name__ == "__main__":
         #TODO: method to handle goal position
 
         direction = xlsx.get_direction_byteam(time_shot, team_name)
+        half = xlsx.get_half(time_shot)
+
+        if half == 'second half':
+            pos_shot = [1280 - pos_shot[0], 720 - pos_shot[1]]
+        print(pos_shot)
+
         print(direction, team_name)
-        goal_pos1 = [[1280, 330], [1280, 390]]
+        goal_pos1 = [[1280, 320], [1280, 400]]
         goal_mid1 = [1280, 360]
-        goal_pos2 = [[0, 330], [0, 390]]
+        goal_pos2 = [[0, 320], [0, 400]]
         goal_mid2 = [0, 360]
 
         if direction == 'left':
@@ -89,13 +95,11 @@ if __name__ == "__main__":
             goal_mid = goal_mid1
             goal_pos = goal_pos1
 
-        num = cal_numdef_around(pos_shot, pers_point, threshold=400)
-        num1 = cal_numdef_2goal(pos_shot, pers_point, goal_pos)
-        dis = cal_eurdistance(goal_mid, pos_shot)
+        pts = np.array([goal_pos[0], goal_pos[1], pos_shot, goal_pos[0]])
+        cv2.polylines(model_image, [pts], True, (255, 255, 0), 3)
+
         # logger.info(dis)
-        xg = cal_xg(dis, num, num1, header=0)
-        logger.info(num)
-        logger.info(num1)
+        xg = cal_xg(pos_shot, pers_point, goal_pos, goal_mid, header=0)
         logger.info(xg)
 
         real_xg = shot_list[index]['xg']
