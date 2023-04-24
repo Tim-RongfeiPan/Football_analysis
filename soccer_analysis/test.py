@@ -39,6 +39,11 @@ if __name__ == "__main__":
 
     # save screen shot
     for index, event in enumerate(test_list):
+        if index == 2:
+            continue
+        ind = index
+        if index > 2:
+            ind = index - 1
         print('=============================================')
         # logger.info(event)
         time_shot = event[1]
@@ -70,9 +75,6 @@ if __name__ == "__main__":
             int(pos_shot[1] * 720 / 100)
         ]
 
-        # logger.info(pos_shot)
-        # logger.info(pers_point)
-
         #TODO: method to handle goal position
 
         direction = xlsx.get_direction_byteam(time_shot, team_name)
@@ -102,8 +104,22 @@ if __name__ == "__main__":
         xg = cal_xg(pos_shot, pers_point, goal_pos, goal_mid, header=0)
         logger.info(xg)
 
-        real_xg = shot_list[index]['xg']
+        real_xg = shot_list[ind]['xg']
         logger.info(real_xg)
+
+        logger.info(time_shot)
+        start_time = int(shot_list[ind]['start_time'])
+        strstart_time = str(int(
+            start_time / 60)) + ":" + str(start_time -
+                                          int(start_time / 60) * 60)
+        logger.info(strstart_time)
+
+        end_time = int(shot_list[ind]['end_time'])
+        strend_time = str(int(
+            end_time / 60)) + ":" + str(end_time - int(end_time / 60) * 60)
+        logger.info(strend_time)
+
+        logger.info(shot_list[ind]['player'])
         print('=============================================')
 
         if not os.path.exists('runs/save/' + str(index)):

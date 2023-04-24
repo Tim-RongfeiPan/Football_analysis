@@ -65,9 +65,9 @@ def cal_xg(pos_shot, pers_point, goal_pos, goal_mid, header=0):
 
     angle = cal_angle(pos_shot, goal_mid)
 
-    logger.info(num_ar)
-    logger.info(num_goal)
-    logger.info(dis)
+    # logger.info(num_ar)
+    # logger.info(num_goal)
+    # logger.info(dis)
 
     # xg = (1900 - dis) / 1900 - num_ar / 20 - num_goal / 10 - angle / 90 * 0.5
     # xg = xg / 15 + (1 - header) * 14 * xg / 15
