@@ -164,10 +164,24 @@ class Get_Eventdata:
         return pos_list
 
     def get_startime(self):
+        """get start time in the video
+
+        Returns:
+            datetime.time: time
+        """
         starttime = self.getdata_byaxis(2, 2)
         return starttime
 
     def get_direction_byteam(self, time, team_name):
+        """get the direction depending on time and team
+
+        Args:
+            time (datetime.time): shot time
+            team_name (string): team name
+
+        Returns:
+            string: left or right
+        """
         s = self.get_initdirection()
         t = self.get_startime()
         if datetime.datetime.combine(
@@ -192,6 +206,14 @@ class Get_Eventdata:
                     return 'left'
 
     def get_half(self, time):
+        """first or second half depends on time
+
+        Args:
+            time (datetime.time): shot time
+
+        Returns:
+            string: 'first half' or 'second half'
+        """
         s = self.get_initdirection()
         t = self.get_startime()
         if datetime.datetime.combine(
