@@ -68,7 +68,6 @@ if __name__ == "__main__":
         #               (1324, -136, 'Blue'), (1313, -145, 'White'),
         #               (1435, 9, 'White'), (1469, -262, 'Blue'),
         #               (1747, -992, 'White')]
-
         pos_shot = [int(pos_shot[0]), int(pos_shot[1])]
         pos_shot = [
             int(pos_shot[0] * 1280 / 100),
