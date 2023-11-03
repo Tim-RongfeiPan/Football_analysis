@@ -1,7 +1,0 @@
-numpy
-scipy
-pyflann
-opencv
-pytorch-cpu torchvision-cpu
-torch
-Pillow
